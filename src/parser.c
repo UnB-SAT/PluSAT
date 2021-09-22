@@ -1,7 +1,7 @@
 #include "parser.h"
 #include "formula.h"
 
-void readCNF(FILE *cnf)
+Formula* readCNF(FILE *cnf)
 {
 
     Formula *problemF;
@@ -20,8 +20,7 @@ void readCNF(FILE *cnf)
         //comment: just free the memory and continue
         if(pointer == 'c')
         {
-            printf("Removin a comment\n");
-            getline(&line, &linesize, cnf);
+            getline(&line, &linesize, cnf); 
             free(line);
             line = NULL;
         }
@@ -32,9 +31,6 @@ void readCNF(FILE *cnf)
 
             problemF = initFormula(V, C);
 
-            printf("Vertices %d\n", V);
-            printf("Clauses %d\n", C);
-
         }
         //clauses
         else if(pointer == '-' || (pointer >= '0' && pointer <= '9'))
@@ -42,9 +38,11 @@ void readCNF(FILE *cnf)
 
             ungetc((int)pointer, cnf);
 
+            Clause *tempClause = initClause();
+
             while(fscanf(cnf, "%d", &variableAux) && variableAux != 0)
             {
-                printf("%d\n", variableAux);
+                addVariable(tempClause, (Literal*)&variableAux);
             }
 
             variableAux = -1;
@@ -53,4 +51,5 @@ void readCNF(FILE *cnf)
 
     }
 
+    return problemF;
 }

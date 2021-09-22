@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "formula.h"
 
-void readCNF(FILE *cnf);
+Formula* readCNF(FILE *cnf);
 
 #endif
