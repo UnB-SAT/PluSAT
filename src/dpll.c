@@ -2,7 +2,7 @@
 #include "formula.h"
 
 #define INITIAL_DECISION_VALUE 0
-#define MAX_CAPACITY 1000
+#define MAX_CAPACITY 10
 
 typedef struct Decision
 {
@@ -78,26 +78,35 @@ DecisionStack *level;
 
 void initLevel()
 {
-    level = createStack();
+
+    printf("---------");
+    DecisionStack *stack = createStack();
+
+    printf("asdfjaçlksjf");
+
+    level = stack;
 }
 
 void dpllRecursive(Formula* problem)
 {
 
+    //bcp 
+    
     int var = Decide(problem);
+
     if(var !=-1){
 
-        Stack_InsertDecision(level, var, 1);
-        printf("A var %d value %d\n", var, 1);
+        Stack_InsertDecision(level, var, TRUE);
+        printf("A var %d value %d\n", var, TRUE);
         dpllRecursive(problem);
         Stack_PopTop(level);
-        printf("R var %d value %d\n", var, 1);
+        printf("R var %d value %d\n", var, TRUE);
 
-        Stack_InsertDecision(level, var, 0);
-        printf("A var %d value %d\n", var, 0);
+        Stack_InsertDecision(level, var, FALSE);
+        printf("A var %d value %d\n", var, FALSE);
         dpllRecursive(problem);
         Stack_PopTop(level);
-        printf("R var %d value %d\n", var, 0);
+        printf("R var %d value %d\n", var, FALSE);
 
         unDecide(problem);
 

@@ -8,4 +8,6 @@
 void dpll(Formula *problem);
 void dpllRecursive(Formula *problem);
 
+void initLevel();
+
 #endif

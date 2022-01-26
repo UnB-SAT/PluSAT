@@ -10,6 +10,7 @@ int main(int argc, char **argv)
     if(argc == 1)
     {
         printf("Don't have a file");
+        exit(1);
     }
 
     char *file = argv[1];
@@ -19,7 +20,7 @@ int main(int argc, char **argv)
     form = readCNF(fopen(file, "r"));
 
     initLevel();
-    dpllRecursive(form);
+    //dpllRecursive(form);
 
     free(form);
 
