@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define LIT_TABLE_SIZE 100
+
 enum LiteralStates{FALSE, TRUE, UNK};
 
 typedef int16_t LiteralId;
@@ -13,23 +15,26 @@ typedef struct Clause
     LiteralId* variables;
 }Clause;
 
-typedef struct Node
+typedef struct VarEntry
 {
     LiteralId id;
     Clause *clause;
-    struct Node *next;
-    struct Node *prev;
-}Node;
+}VarEntry;
 
 typedef struct Formula
 {
-    Node *variableTable;
-
     uint16_t numClauses;
     LiteralId* variables;
 }Formula;
 
+LiteralId* litTable;
+
 Clause* newClause(LiteralId*, uint8_t);
+void initLiteralTable();
 void freeClause(Clause*);
+void addClause(Formula*, Clause*);
+void disableClause(Formula*, Clause*);
+void removeClause(Formula*, Clause*);
+void addClauseOnTable(LiteralId, Clause*);
 
 #endif

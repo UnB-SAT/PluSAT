@@ -1,8 +1,10 @@
-compile: 
-	gcc test_formula.c -I. formula.c -o formula.out
+TEST_TARGET=formula.out
 
-run: compile
-	./formula.out
+compiletest: 
+	@gcc test_formula.c -I. formula.c -o $(TEST_TARGET)
+
+runtest: compiletest
+	./$(TEST_TARGET) && rm $(TEST_TARGET)
 
 clean:
 	@rm formula.out

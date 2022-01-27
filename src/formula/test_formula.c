@@ -16,9 +16,25 @@ void testAllocationClause()
 
 }
 
+void testAllocateLitTable()
+{
+
+    LiteralId *table = NULL;
+
+    initLiteralTable(table);
+
+}
+
 int main()
 {
+
+    printf(".");
     testAllocationClause();
+
+    printf(".");
+    testAllocateLitTable();
+
+    printf("\n");
 
     return 0;
 }
