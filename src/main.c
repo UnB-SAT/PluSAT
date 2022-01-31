@@ -19,10 +19,7 @@ int main(int argc, char **argv)
 
     form = readCNF(fopen(file, "r"));
 
-    initLevel();
     //dpllRecursive(form);
-
-    free(form);
 
     return 0;
 }

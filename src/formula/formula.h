@@ -1,5 +1,5 @@
-#ifndef __FORMULA__
-#define __FORMULA__
+#ifndef __FORM__
+#define __FORM__
 
 #include <stdint.h>
 
@@ -15,26 +15,25 @@ typedef struct Clause
     LiteralId* variables;
 }Clause;
 
-typedef struct VarEntry
-{
-    LiteralId id;
-    Clause *clause;
-}VarEntry;
-
-typedef struct Formula
+typedef struct Form
 {
     uint16_t numClauses;
-    LiteralId* variables;
-}Formula;
+    Clause** clauses;
+}Form;
 
-LiteralId* litTable;
-
+// Handle Clauses
 Clause* newClause(LiteralId*, uint8_t);
-void initLiteralTable();
 void freeClause(Clause*);
-void addClause(Formula*, Clause*);
-void disableClause(Formula*, Clause*);
-void removeClause(Formula*, Clause*);
+
+// Handle form
+Form* newForm();
+void freeForm(Form*);
+
+// nothing now
+void addClause(Form*, Clause*);
+void initLiteralTable();
+void disableClause(Form*, Clause*);
+void removeClause(Form*, Clause*);
 void addClauseOnTable(LiteralId, Clause*);
 
 #endif

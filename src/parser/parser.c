@@ -1,10 +1,10 @@
 #include "parser.h"
 #include "formula.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 Formula* readCNF(FILE *cnf)
 {
-
-    Formula *problemF;
 
     char pointer;
     char *line = NULL;
@@ -28,9 +28,6 @@ Formula* readCNF(FILE *cnf)
         else if(pointer == 'p')
         {
             fscanf(cnf, " cnf %d %d", &V, &C);
-
-            problemF = initFormula(V, C);
-
         }
         //clauses
         else if(pointer == '-' || (pointer >= '0' && pointer <= '9'))

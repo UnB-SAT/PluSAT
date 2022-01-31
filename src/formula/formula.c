@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 Clause* newClause(LiteralId *variables, uint8_t numVars)
 {
     Clause* clause = malloc(sizeof(Clause));
@@ -12,12 +13,11 @@ Clause* newClause(LiteralId *variables, uint8_t numVars)
         exit(1);
     }
 
-    clause->size = 0;
+    clause->size = numVars;
     clause->variables = NULL;
 
-    // TODO use memcpy here
-    //memcpy(clause->variables, variables, numVars*sizeof(LiteralId));
-    clause->variables = variables;
+    clause->variables = malloc(sizeof(LiteralId)*numVars);
+    memcpy(clause->variables, variables, numVars*sizeof(LiteralId));
 
     return clause;
 }
@@ -26,29 +26,36 @@ void freeClause(Clause *clause)
 {
     free(clause->variables);
     free(clause);
-    clause = NULL;
 }
 
-
-void initLiteralTable()
+Form* newForm()
 {
-    litTable = malloc(sizeof(LiteralId)*LIT_TABLE_SIZE);
+    Form* form = malloc(sizeof(Form));
 
-    if(litTable == NULL)
+    if(form == NULL)
         exit(1);
+
+    form->clauses = NULL;
+    form->numClauses = 0;
+
+    return form;
 }
 
-void addClauseOnTable(LiteralId literal, Clause* clause)
+void freeForm(Form* form)
 {
-}
-
-void addClause(Formula* form, Clause* clause)
-{
-    // add reference in each variable reference
-    for(int literalIdx = 0; literalIdx < clause->size; literalIdx++)
+    for(int i = 0; i<form->numClauses; ++i)
     {
-        addClauseOnTable(clause->variables[literalIdx], clause);
+        freeClause(form->clauses[i]);
     }
 
-    // add a clause on a formula
+    free(form->clauses);
+    free(form);
+}
+
+void addClause(Form* form, Clause* clause)
+{
+
+    form->numClauses++;
+    form->clauses = realloc(form->clauses, form->numClauses*sizeof(Clause*));
+    form->clauses[form->numClauses-1] = clause;
 }

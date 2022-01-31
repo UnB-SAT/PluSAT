@@ -13,15 +13,26 @@ void testAllocationClause()
 
     Clause* clause = newClause(var, size);
     freeClause(clause);
+    free(var);
 
 }
 
-void testAllocateLitTable()
+void testCreateForm()
 {
+    LiteralId values[] = {1, 2, 3};
 
-    LiteralId *table = NULL;
+    Form* form = newForm();
+    Clause* clause1 = newClause(values, 3);
+    Clause* clause2 = newClause(values, 3);
+    Clause* clause3 = newClause(values, 3);
+    Clause* clause4 = newClause(values, 3);
 
-    initLiteralTable(table);
+    addClause(form, clause1);
+    addClause(form, clause2);
+    addClause(form, clause3);
+    addClause(form, clause4);
+
+    freeForm(form);
 
 }
 
@@ -32,7 +43,8 @@ int main()
     testAllocationClause();
 
     printf(".");
-    testAllocateLitTable();
+    testCreateForm();
+
 
     printf("\n");
 

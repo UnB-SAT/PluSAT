@@ -1,9 +1,8 @@
 #ifndef __PARSER__
 #define __PARSER__
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "formula.h"
+#include <stdio.h>
 
 Formula* readCNF(FILE *cnf);
 
