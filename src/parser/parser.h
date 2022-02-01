@@ -4,6 +4,8 @@
 #include "formula.h"
 #include <stdio.h>
 
-Formula* readCNF(FILE *cnf);
+#define INITIAL_BUFFER_SIZE 64
+
+Form* readCNF(FILE *cnf);
 
 #endif

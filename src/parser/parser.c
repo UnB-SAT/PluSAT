@@ -1,9 +1,10 @@
-#include "parser.h"
-#include "formula.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-Formula* readCNF(FILE *cnf)
+#include "formula.h"
+#include "parser.h"
+
+Form* readCNF(FILE *cnf)
 {
 
     char pointer;
@@ -13,6 +14,12 @@ Formula* readCNF(FILE *cnf)
 
     int variableAux = -1;
     int V = -1, C= -1;
+
+    int bufferMaxSize = INITIAL_BUFFER_SIZE;
+    int bufferSize = 0;
+    LiteralId* literalBuffer = malloc(sizeof(LiteralId)*bufferMaxSize);
+
+    Form* problemF = newForm();
 
     while(fscanf(cnf, " %c", &pointer) == 1)
     {
@@ -35,18 +42,32 @@ Formula* readCNF(FILE *cnf)
 
             ungetc((int)pointer, cnf);
 
-            Clause *tempClause = initClause();
 
             while(fscanf(cnf, "%d", &variableAux) && variableAux != 0)
             {
-                addVariable(tempClause, (Literal*)&variableAux);
-            }
 
+                literalBuffer[bufferSize++] = variableAux;
+
+                if(bufferSize == bufferMaxSize)
+                {
+                    bufferMaxSize*=2;
+                    literalBuffer = realloc(literalBuffer, sizeof(LiteralId)*bufferMaxSize);
+                }
+
+            }
+            Clause *tempClause = newClause(literalBuffer, bufferSize);
+
+            addClause(problemF, tempClause);
+
+            bufferSize=0;
             variableAux = -1;
 
         }
 
+
+
     }
 
+    free(literalBuffer);
     return problemF;
 }

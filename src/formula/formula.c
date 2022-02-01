@@ -1,8 +1,8 @@
-#include "formula.h"
 #include <stdlib.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "formula.h"
 
 Clause* newClause(LiteralId *variables, uint8_t numVars)
 {
