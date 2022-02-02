@@ -19,7 +19,7 @@ Form* readCNF(FILE *cnf)
     int bufferSize = 0;
     LiteralId* literalBuffer = malloc(sizeof(LiteralId)*bufferMaxSize);
 
-    Form* problemF = newForm();
+    Form* problemF = NULL;
 
     while(fscanf(cnf, " %c", &pointer) == 1)
     {
@@ -35,6 +35,8 @@ Form* readCNF(FILE *cnf)
         else if(pointer == 'p')
         {
             fscanf(cnf, " cnf %d %d", &V, &C);
+
+            problemF = newForm(V);
         }
         //clauses
         else if(pointer == '-' || (pointer >= '0' && pointer <= '9'))
@@ -64,10 +66,9 @@ Form* readCNF(FILE *cnf)
 
         }
 
-
-
     }
 
     free(literalBuffer);
+
     return problemF;
 }

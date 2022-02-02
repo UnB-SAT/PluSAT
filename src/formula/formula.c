@@ -28,7 +28,7 @@ void freeClause(Clause *clause)
     free(clause);
 }
 
-Form* newForm()
+Form* newForm(uint16_t numVars)
 {
     Form* form = malloc(sizeof(Form));
 
@@ -37,6 +37,7 @@ Form* newForm()
 
     form->clauses = NULL;
     form->numClauses = 0;
+    form->variables = malloc(sizeof(VariableTree)*numVars);
 
     return form;
 }
@@ -49,6 +50,7 @@ void freeForm(Form* form)
     }
 
     free(form->clauses);
+    free(form->variables);
     free(form);
 }
 

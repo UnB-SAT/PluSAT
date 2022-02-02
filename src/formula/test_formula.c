@@ -21,7 +21,7 @@ void testCreateForm()
 {
     LiteralId values[] = {1, 2, 3};
 
-    Form* form = newForm();
+    Form* form = newForm(3);
     Clause* clause1 = newClause(values, 3);
     Clause* clause2 = newClause(values, 3);
     Clause* clause3 = newClause(values, 3);

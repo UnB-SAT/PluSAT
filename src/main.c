@@ -5,7 +5,6 @@
 
 int main(int argc, char **argv)
 {
-    printf("%d\n", argc);
 
     if(argc == 1)
     {
@@ -15,11 +14,13 @@ int main(int argc, char **argv)
 
     char *file = argv[1];
 
-    Formula *form;
+    Form *form;
 
     form = readCNF(fopen(file, "r"));
 
     //dpllRecursive(form);
+    //
+    freeForm(form);
 
     return 0;
 }

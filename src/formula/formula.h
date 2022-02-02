@@ -16,25 +16,32 @@ typedef struct Clause
     LiteralId* variables;
 }Clause;
 
+typedef struct Node
+{
+    Clause* clause;
+    struct Node* next;
+}Node;
+
+typedef struct VariableTree
+{
+    Node *trueLitClauses;
+    Node *falseLitClauses;
+}VariableTree;
+
 typedef struct Form
 {
     uint16_t numClauses;
     Clause** clauses;
+    VariableTree *variables;
 }Form;
 
 // Handle Clauses
 Clause* newClause(LiteralId*, uint8_t);
 void freeClause(Clause*);
+void addClause(Form*, Clause*);
 
 // Handle form
-Form* newForm();
+Form* newForm(uint16_t);
 void freeForm(Form*);
-
-// nothing now
-void addClause(Form*, Clause*);
-void initLiteralTable();
-void disableClause(Form*, Clause*);
-void removeClause(Form*, Clause*);
-void addClauseOnTable(LiteralId, Clause*);
 
 #endif

@@ -24,7 +24,7 @@ Decision *newDecision(int varIndex, int value, int forced)
 
 static int count = 0;
 
-int Decide(Formula *problem)
+int Decide(Form *problem)
 {
     if(count < problem->varSize)
     {
@@ -36,7 +36,7 @@ int Decide(Formula *problem)
     }
 }
 
-int unDecide(Formula *problem)
+int unDecide(Form *problem)
 {
 
     if(count > 0)
@@ -87,7 +87,7 @@ void initLevel()
     level = stack;
 }
 
-void dpllRecursive(Formula* problem)
+void dpllRecursive(Form* problem)
 {
 
     //bcp 
@@ -115,7 +115,7 @@ void dpllRecursive(Formula* problem)
 
 }
 
-void dpll(Formula* problem)
+void dpll(Form* problem)
 {
 
     //This section has a allocation problem
