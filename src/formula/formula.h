@@ -24,16 +24,22 @@ typedef struct Node
 
 typedef struct VariableTree
 {
-    Node *trueLitClauses;
-    Node *falseLitClauses;
+    Node* trueLitClauses;
+    Node* falseLitClauses;
 }VariableTree;
 
 typedef struct Form
 {
-    uint16_t numClauses;
+    int16_t numClauses;
+    int16_t numVars;
     Clause** clauses;
-    VariableTree *variables;
+    VariableTree* variables;
+
 }Form;
+// Variable Tree
+Node* addOnList(Node*, Node*);
+Node* newNode(Clause* clause);
+void freeList(Node*);
 
 // Handle Clauses
 Clause* newClause(LiteralId*, uint8_t);

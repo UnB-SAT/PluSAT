@@ -3,6 +3,20 @@
 #include <stdlib.h>
 #include <assert.h>
 
+void testAllocationVarTree()
+{
+    LiteralId values[] = {1, 2, 3};
+
+    Clause* clause1 = newClause(values, 3);
+
+    Node *list = NULL;
+
+    list = addOnList(newNode(clause1), list);
+
+    freeList(list);
+    freeClause(clause1);
+}
+
 void testAllocationClause()
 {
     int size = 3;
@@ -33,7 +47,6 @@ void testCreateForm()
     addClause(form, clause4);
 
     freeForm(form);
-
 }
 
 int main()
@@ -44,6 +57,9 @@ int main()
 
     printf(".");
     testCreateForm();
+
+    printf(".");
+    testAllocationVarTree();
 
 
     printf("\n");
