@@ -1,4 +1,6 @@
-CC=gcc -fsanitize=address
+CC=gcc
+CFLAGS = -fsanitize=address
+INCLUDES = -I formula/ -I parser/ -I dpll/
 
 makebuilddir:
 	@echo "Create build directory"
@@ -6,15 +8,19 @@ makebuilddir:
 
 formula: makebuilddir
 	@echo "Building formula module"
-	$(CC) -c -o build/formula.o formula/formula.c -I formula/
+	$(CC) $(CFLAGS) -c -o build/formula.o formula/formula.c $(INCLUDES)
 
-parser: makebuilddir 
+parser: makebuilddir
 	@echo "Building parser module"
-	$(CC) -c -o build/parser.o parser/parser.c -I formula/ -I parser/
+	$(CC) $(CFLAGS) -c -o build/parser.o parser/parser.c $(INCLUDES)
 
-build: formula parser
+dpll: makebuilddir
+	@echo "Bulding dpll module"
+	$(CC) $(CFLAGS) -c -o build/dpll.o dpll/dpll.c $(INCLUDES)
+
+build: formula parser dpll
 	@echo "Bulding main"
-	$(CC) main.c build/parser.o build/formula.o -I formula/ -I parser -o build/main.o
+	$(CC) $(CFLAGS) main.c build/parser.o build/formula.o  build/dpll.o $(INCLUDES) -o build/main.o
 
 clean: 
 	rm -rf build/

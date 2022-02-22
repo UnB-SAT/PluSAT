@@ -15,10 +15,12 @@ int main(int argc, char **argv)
     char *file = argv[1];
 
     Form *form;
-
     form = readCNF(fopen(file, "r"));
 
-    //dpllRecursive(form);
+    initDecisionLevels(form->numVars);
+    dpllRecursive(form);
+    cleanDecisionLevels();
+
     //
     freeForm(form);
 

@@ -5,7 +5,7 @@
 
 #define LIT_TABLE_SIZE 100
 
-enum LiteralStates{FALSE, TRUE, UNK};
+typedef enum LiteralStates{FALSE, TRUE, UNK} LitState;
 
 typedef int16_t LiteralId;
 typedef int16_t VariableId;
@@ -34,6 +34,7 @@ typedef struct Form
     int16_t numVars;
     Clause** clauses;
     VariableTree* variables;
+    int *decisions;
 
 }Form;
 // Variable Tree
