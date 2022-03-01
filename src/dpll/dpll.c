@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 // global variables
 
@@ -20,29 +21,24 @@ void initDecisionLevels(const int numVars)
 
 void cleanDecisionLevels()
 {
-    free(decisions);
     free(levels);
+    free(decisions);
 }
 
 static int count=0;
 
-VariableId Decide(const Form* form)
-{
-
-    if(count < form->numVars)
-    {
-        return count++;
-    }
-    else
-        return -1;
+/*
+ * Aqui a variável e decidida
+ * Inserida a decisão no nível
+ */
 
 
-}
 
 /* Levels structure*/
 void insertDecisionLevel(const VariableId var, const int decision)
 {
     decisions[var] = decision;
+    printf("Variable %d set: %d\n", var, decisions[var]);
 
     levels[levelNum].flipped = 0;
     levels[levelNum].id = var;
@@ -51,16 +47,34 @@ void insertDecisionLevel(const VariableId var, const int decision)
     levelNum++;
 }
 
-Decision getLastDecision()
+Decision* getLastDecision()
 {
-    return levels[levelNum-1];
+    if(levelNum > 0)
+        return &levels[levelNum-1];
+    else 
+        return NULL;
 }
 
 void removeDecisionLevel()
 {
 
-    decisions[getLastDecision().id] = UNK;
+    Decision *d = getLastDecision();
+    printf("Decision %d unseted: %d\n", d->id, decisions[d->id]);
+    decisions[d->id] = UNK;
     levelNum--;
+}
+
+enum DecideState Decide(const Form* form)
+{
+
+    if(levelNum < form->numVars)
+    {
+        insertDecisionLevel(levelNum, FALSE);
+
+        return FOUND_VAR;
+    }
+
+    return ALL_ASSIGNED;
 }
 
 
@@ -78,12 +92,8 @@ bool BCP(Form *formula, const Decision decision)
 
        flag = false;
 
-       printf("%d\n", clause->size);
-
-
        for (int j = 0; j< clause->size; ++j)
        {
-           printf("variable ->%d\n", clause->variables[j]);
 
            int variable = clause->variables[j];
 
@@ -96,41 +106,59 @@ bool BCP(Form *formula, const Decision decision)
 
        // some clause have only variables with false assigned
        if(flag == false)
+       {
+           printf("Clause %d\n", i);
            return false;
+       }
    }
 
    return true;
 }
-
-void dpllRecursive(Form* problem)
+bool resolveConflict()
 {
 
-    VariableId var = Decide(problem);
+    Decision *d;
 
-    Decision decision;
-
-    if(var !=-1){
-
-
-        insertDecisionLevel(var, TRUE);
-
-        BCP(problem, getLastDecision());
-        printf("A var %d value %d\n", var, TRUE);
-        dpllRecursive(problem);
-        printf("R var %d value %d\n", var, TRUE);
+    while((d = getLastDecision()) && d->flipped)
+    {
         removeDecisionLevel();
-
-        insertDecisionLevel(var, FALSE);
-        BCP(problem, getLastDecision());
-        printf("A var %d value %d\n", var, FALSE);
-        dpllRecursive(problem);
-        printf("R var %d value %d\n", var, FALSE);
-        removeDecisionLevel();
-
-
-    }else{
-        printf("good");
     }
 
+    if(levelNum <= 0)
+        return false;
+
+    d->value = TRUE;
+    decisions[d->id] = TRUE;
+    d->flipped = 1;
+
+    return true;
+}
+
+enum SolverResult dpll(Form *problem)
+{
+
+    enum DecideState dState;
+
+    while(true)
+    {
+
+
+        dState = Decide(problem);
+
+        if(dState == ALL_ASSIGNED)
+            return SAT;
+
+        while(!BCP(problem, *getLastDecision()))
+        {
+            printf("Error on level %d\n", levelNum);
+            if(!resolveConflict())
+                return UNSAT;
+
+            printf("----------------\n");
+            for(int i = 0; i<problem->numVars; ++i)
+                printf("%d ", decisions[i]);
+            printf("\n");
+        }
+    }
 }
 

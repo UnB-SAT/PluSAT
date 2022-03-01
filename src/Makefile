@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS = -fsanitize=address
-INCLUDES = -I formula/ -I parser/ -I dpll/
+INCLUDES = -I formula/ -I parser/ -I dpll/ -I level/
 
 makebuilddir:
 	@echo "Create build directory"
@@ -26,4 +26,4 @@ clean:
 	rm -rf build/
 
 run: build
-	./build/main.o ../inputs/test2.cnf
+	./build/main.o ../inputs/test3.cnf
