@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "formula.h"
 #include "parser.h"
 
@@ -39,15 +38,13 @@ Form* readCNF(FILE *cnf)
             problemF = newForm(V);
         }
         //clauses
-        else if(pointer == '-' || (pointer >= '0' && pointer <= '9'))
+        else if(pointer == '-' || (pointer >= '1' && pointer <= '9'))
         {
 
             ungetc((int)pointer, cnf);
 
-
             while(fscanf(cnf, "%d", &variableAux) && variableAux != 0)
             {
-
                 literalBuffer[bufferSize++] = variableAux;
 
                 if(bufferSize == bufferMaxSize)

@@ -26,4 +26,4 @@ clean:
 	rm -rf build/
 
 run: build
-	./build/main.o ../inputs/test3.cnf
+	./build/main.o ../data/uf20-037.cnf

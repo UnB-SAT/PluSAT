@@ -3,7 +3,7 @@
 int main()
 {
 
-    Form* f = readCNF(fopen("../../inputs/test2.cnf", "r"));
+    Form* f = readCNF(fopen("../../data/uf20-01.cnf", "r"));
 
 
     for(int j = 0; j<f->numClauses; ++j)
