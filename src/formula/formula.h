@@ -13,7 +13,7 @@ typedef int16_t VariableId;
 typedef struct Clause
 {
     uint8_t size;
-    LiteralId* variables;
+    LiteralId* literals;
 }Clause;
 
 typedef struct Node

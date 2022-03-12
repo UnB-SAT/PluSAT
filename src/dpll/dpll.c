@@ -38,7 +38,6 @@ static int count=0;
 void insertDecisionLevel(const VariableId var, const int decision)
 {
     decisions[var] = decision;
-    printf("Variable %d set: %d\n", var, decisions[var]);
 
     levels[levelNum].flipped = 0;
     levels[levelNum].id = var;
@@ -59,7 +58,6 @@ void removeDecisionLevel()
 {
 
     Decision *d = getLastDecision();
-    printf("Decision %d unseted: %d\n", d->id, decisions[d->id]);
     decisions[d->id] = UNK;
     levelNum--;
 }
@@ -95,25 +93,24 @@ bool BCP(Form *formula, const Decision decision)
        for (int j = 0; j< clause->size; ++j)
        {
 
-           int variable = clause->variables[j];
+           int variable = clause->literals[j];
 
            variable = (variable >= 0)? variable : -variable;
 
            if (decisions[variable-1] != FALSE)
                flag = true;
        }
-       
 
        // some clause have only variables with false assigned
        if(flag == false)
        {
-           printf("Clause %d\n", i);
            return false;
        }
    }
 
    return true;
 }
+
 bool resolveConflict()
 {
 
@@ -146,19 +143,19 @@ enum SolverResult dpll(Form *problem)
         dState = Decide(problem);
 
         if(dState == ALL_ASSIGNED)
-            return SAT;
-
-        while(!BCP(problem, *getLastDecision()))
         {
-            printf("Error on level %d\n", levelNum);
-            if(!resolveConflict())
-                return UNSAT;
-
-            printf("----------------\n");
             for(int i = 0; i<problem->numVars; ++i)
                 printf("%d ", decisions[i]);
             printf("\n");
+            return SAT;
         }
+
+        while(!BCP(problem, *getLastDecision()))
+        {
+            if(!resolveConflict())
+                return UNSAT;
+
+                }
     }
 }
 

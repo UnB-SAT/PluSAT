@@ -17,10 +17,10 @@ int main(int argc, char **argv)
     Form *form;
     form = readCNF(fopen(file, "r"));
 
-    printf("NUM VARS %d\n", form->numVars);
-
     initDecisionLevels(form->numVars);
     enum SolverResult r = dpll(form);
+
+    assert(r==SAT);
 
     printf("IS Sat: %d\n", r==SAT);
     cleanDecisionLevels();

@@ -20,7 +20,7 @@ void addClause(Form* form, Clause* clause)
     for(int i = 0; i<clause->size; ++i)
     {
 
-        litId = clause->variables[i];
+        litId = clause->literals[i];
 
         varId = (litId < 0)? -litId : litId;
 
@@ -47,24 +47,23 @@ Clause* newClause(LiteralId *variables, uint8_t numVars)
     }
 
     clause->size = numVars;
-    clause->variables = NULL;
+    clause->literals = NULL;
 
-    clause->variables = malloc(sizeof(LiteralId)*numVars);
-    memcpy(clause->variables, variables, numVars*sizeof(LiteralId));
+    clause->literals = malloc(sizeof(LiteralId)*numVars);
+    memcpy(clause->literals, variables, numVars*sizeof(LiteralId));
 
     return clause;
 }
 
 void freeClause(Clause *clause)
 {
-    free(clause->variables);
+    free(clause->literals);
     free(clause);
 }
 
 /*
  * FORM
  */
-
 Form* newForm(uint16_t numVars)
 {
     Form* form = malloc(sizeof(Form));
@@ -76,7 +75,7 @@ Form* newForm(uint16_t numVars)
     form->numClauses = 0;
 
     form->numVars = numVars;
-    form->variables = malloc(sizeof(VariableTree)*numVars);
+    form->literals = malloc(sizeof(VariableTree)*numVars);
     memset(form->variables, 0, sizeof(VariableTree)*numVars);
 
     return form;
