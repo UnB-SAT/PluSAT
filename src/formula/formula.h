@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define LIT_TABLE_SIZE 100
+// CLAUSES
 
 typedef enum LiteralStates{FALSE, TRUE, UNK} LitState;
 
@@ -16,39 +16,37 @@ typedef struct Clause
     LiteralId* literals;
 }Clause;
 
-typedef struct Node
+struct Node
 {
     Clause* clause;
     struct Node* next;
-}Node;
+};
 
-typedef struct VariableTree
-{
-    Node* trueLitClauses;
-    Node* falseLitClauses;
-}VariableTree;
+typedef struct Node  ClauseNode;
+
+Clause* newClause(LiteralId*, uint8_t);
+void freeClause(Clause*);
+
+void freeList(struct Node*);
+
+// FORM
 
 typedef struct Form
 {
     int16_t numClauses;
     int16_t numVars;
-    Clause** clauses;
-    VariableTree* variables;
-    int *decisions;
+
+    // Clauses to be cleaned
+    ClauseNode* clauses;
+
+    // Clause list indexed by literal 
+    // positive 2*n and negative 2*n+1
+    ClauseNode** literals;
 
 }Form;
-// Variable Tree
-Node* addOnList(Node*, Node*);
-Node* newNode(Clause* clause);
-void freeList(Node*);
 
-// Handle Clauses
-Clause* newClause(LiteralId*, uint8_t);
-void freeClause(Clause*);
-void addClause(Form*, Clause*);
-
-// Handle form
 Form* newForm(uint16_t);
 void freeForm(Form*);
+void addClause(Clause*, Form*);
 
 #endif

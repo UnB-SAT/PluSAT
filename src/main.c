@@ -20,8 +20,6 @@ int main(int argc, char **argv)
     initDecisionLevels(form->numVars);
     enum SolverResult r = dpll(form);
 
-    assert(r==SAT);
-
     printf("IS Sat: %d\n", r==SAT);
     cleanDecisionLevels();
 

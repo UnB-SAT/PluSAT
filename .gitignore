@@ -2,3 +2,4 @@ solver
 *.cnf
 *.out
 src/build/
+data/

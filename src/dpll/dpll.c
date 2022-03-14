@@ -84,31 +84,7 @@ bool BCP(Form *formula, const Decision decision)
    bool flag;
    Clause *clause;
 
-   for (int i = 0; i<formula->numClauses; ++i)
-   {
-       clause = formula->clauses[i];
-
-       flag = false;
-
-       for (int j = 0; j< clause->size; ++j)
-       {
-
-           int variable = clause->literals[j];
-
-           variable = (variable >= 0)? variable : -variable;
-
-           if (decisions[variable-1] != FALSE)
-               flag = true;
-       }
-
-       // some clause have only variables with false assigned
-       if(flag == false)
-       {
-           return false;
-       }
-   }
-
-   return true;
+    return true;
 }
 
 bool resolveConflict()

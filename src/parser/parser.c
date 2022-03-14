@@ -56,7 +56,7 @@ Form* readCNF(FILE *cnf)
             }
             Clause *tempClause = newClause(literalBuffer, bufferSize);
 
-            addClause(problemF, tempClause);
+            addClause(tempClause, problemF);
 
             bufferSize=0;
             variableAux = -1;
