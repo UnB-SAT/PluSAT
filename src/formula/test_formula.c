@@ -9,12 +9,11 @@ void testAllocationVarTree()
 
     Clause* clause1 = newClause(values, 3);
 
-    Node *list = NULL;
+    ClauseNode *list = NULL;
 
-    list = addOnList(newNode(clause1), list);
+    list = addNodeOnList(clause1, list);
 
     freeList(list);
-    freeClause(clause1);
 }
 
 void testAllocationClause()
@@ -41,10 +40,11 @@ void testCreateForm()
     Clause* clause3 = newClause(values, 3);
     Clause* clause4 = newClause(values, 3);
 
-    addClause(form, clause1);
-    addClause(form, clause2);
-    addClause(form, clause3);
-    addClause(form, clause4);
+    
+    addClause(clause1, form);
+    addClause(clause2, form);
+    addClause(clause3, form);
+    addClause(clause4, form);
 
     freeForm(form);
 }

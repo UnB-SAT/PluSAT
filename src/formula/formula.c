@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "formula.h"
+#include <stdio.h>
 
 //CLAUSES
 
@@ -24,12 +25,19 @@ Clause* newClause(LiteralId *variables, uint8_t numVars)
     return clause;
 }
 
+void freeClause(Clause *clause)
+{
+    free(clause->literals);
+    free(clause);
+}
+
+
 /* Non negative literals indexed with 2*literalId
  * Negative literals indexed with 2*literalId + 1
  */
 static uint16_t getPos(const LiteralId literal)
 {
-    return (literal > 0)? 2*literal : -2*literal +1;
+    return (literal > 0)? 2*literal -2  : -2*literal -1;
 }
 
 ClauseNode* addNodeOnList(Clause *clause, ClauseNode *list)
@@ -41,8 +49,6 @@ ClauseNode* addNodeOnList(Clause *clause, ClauseNode *list)
         exit(1);
 
     node->clause = clause;
-    node->next = NULL;
-
     node->next = list;
 
     return node;
@@ -62,15 +68,7 @@ void addClause(Clause* clause, Form* form)
     }
 
     form->numClauses++;
-
 }
-
-void freeClause(Clause *clause)
-{
-    free(clause->literals);
-    free(clause);
-}
-
 /*
  * FORM
  */
@@ -89,21 +87,33 @@ Form* newForm(uint16_t numVars)
     form->numVars = numVars;
     form->literals = malloc(sizeof(ClauseNode*)*2*numVars);
 
+    for(int i = 0; i<form->numVars*2; ++i)
+    {
+        form->literals[i] = NULL;
+    }
+
     return form;
 }
 void freeForm(Form* form)
 {
 
-    free(form->literals);
-
-    /*
-    for(int i = 0; i<form->numClauses; ++i)
+    for(int i = 0; i<form->numVars*2; ++i)
     {
-        freeClause(form->clauses[i]);
-    }*/
 
-    free(form->clauses);
+        ClauseNode *pivot, *head;
 
+        head = form->literals[i];
+
+        while(head!=NULL)
+        {
+            pivot = head;
+            head = head->next;
+            free(pivot);
+        }
+    }
+
+    free(form->literals);
+    freeList(form->clauses);
     free(form);
 }
 
@@ -118,16 +128,16 @@ ClauseNode* newNode(Clause* clause)
     return r;
 }
 
-
-void freeList(ClauseNode *list)
+void freeList(ClauseNode *node)
 {
-    ClauseNode *aux = list;
-    ClauseNode *pivot;
+    ClauseNode *pivot, *head;
+    head = node;
 
-    while(aux != NULL)
+    while(head != NULL)
     {
-        pivot = aux;
-        aux = aux->next;
+        pivot = head;
+        head = head->next;
+        freeClause(pivot->clause);
         free(pivot);
     }
 }

@@ -27,7 +27,7 @@ typedef struct Node  ClauseNode;
 Clause* newClause(LiteralId*, uint8_t);
 void freeClause(Clause*);
 
-void freeList(struct Node*);
+void freeList(ClauseNode*);
 
 // FORM
 
@@ -48,5 +48,7 @@ typedef struct Form
 Form* newForm(uint16_t);
 void freeForm(Form*);
 void addClause(Clause*, Form*);
+ClauseNode* addNodeOnList(Clause*, ClauseNode*);
+ClauseNode *newNode(Clause*);
 
 #endif
