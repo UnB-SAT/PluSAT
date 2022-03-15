@@ -6,13 +6,18 @@
 Form* readCNF(FILE *cnf)
 {
 
+    // caracter pointed on the file
     char pointer;
-    char *line = NULL;
 
+    // buffer to get whole lines and free them
+    char *line = NULL;
     size_t linesize = 0;
 
-    int variableAux = -1;
+    // Variable and clause numbers
     int V = -1, C= -1;
+
+    // appoint to a new variable
+    int literalAux = -1;
 
     int bufferMaxSize = INITIAL_BUFFER_SIZE;
     int bufferSize = 0;
@@ -22,7 +27,6 @@ Form* readCNF(FILE *cnf)
 
     while(fscanf(cnf, " %c", &pointer) == 1)
     {
-
         //comment: just free the memory and continue
         if(pointer == 'c')
         {
@@ -34,18 +38,19 @@ Form* readCNF(FILE *cnf)
         else if(pointer == 'p')
         {
             fscanf(cnf, " cnf %d %d", &V, &C);
-
             problemF = newForm(V);
         }
         //clauses
         else if(pointer == '-' || (pointer >= '1' && pointer <= '9'))
         {
 
+            // seek on caracter before (undo the read operation)
             ungetc((int)pointer, cnf);
 
-            while(fscanf(cnf, "%d", &variableAux) && variableAux != 0)
+            //Read a clause line that finish on 0
+            while(fscanf(cnf, "%d", &literalAux) && literalAux != 0)
             {
-                literalBuffer[bufferSize++] = variableAux;
+                literalBuffer[bufferSize++] = literalAux;
 
                 if(bufferSize == bufferMaxSize)
                 {
@@ -54,12 +59,13 @@ Form* readCNF(FILE *cnf)
                 }
 
             }
-            Clause *tempClause = newClause(literalBuffer, bufferSize);
 
+            //Adding this clause into the formula
+            Clause *tempClause = newClause(literalBuffer, bufferSize);
             addClause(tempClause, problemF);
 
             bufferSize=0;
-            variableAux = -1;
+            literalAux = -1;
 
         }
 
