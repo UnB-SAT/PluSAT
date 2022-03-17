@@ -35,7 +35,7 @@ void freeClause(Clause *clause)
 /* Non negative literals indexed with 2*literalId
  * Negative literals indexed with 2*literalId + 1
  */
-static uint16_t getPos(const LiteralId literal)
+uint16_t getPos(const LiteralId literal)
 {
     return (literal > 0)? 2*literal -2  : -2*literal -1;
 }

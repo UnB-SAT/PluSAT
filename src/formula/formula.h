@@ -50,5 +50,6 @@ void freeForm(Form*);
 void addClause(Clause*, Form*);
 ClauseNode* addNodeOnList(Clause*, ClauseNode*);
 ClauseNode *newNode(Clause*);
+uint16_t getPos(const LiteralId);
 
 #endif

@@ -71,6 +71,27 @@ Form* readCNF(FILE *cnf)
 
     }
 
+    // TODO set a debug mode
+
+    ClauseNode *c = problemF->clauses;
+
+    ClauseNode *pivot, *head=c;
+
+    while(head!=NULL)
+    {
+        pivot = head;
+
+        for(int j=0; j<pivot->clause->size; ++j)
+        {
+            printf("%d ", pivot->clause->literals[j]);
+        }
+
+        head = head->next;
+        printf("\n");
+    }
+
+
+
     free(literalBuffer);
 
     return problemF;

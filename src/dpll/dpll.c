@@ -17,6 +17,9 @@ void initDecisionLevels(const int numVars)
     levelNum = 0;
     levels = malloc(sizeof(Decision)*numVars);
     decisions = malloc(sizeof(int)*numVars);
+
+    for(int i =0; i<numVars; ++i)
+        decisions[i] = UNK;
 }
 
 void cleanDecisionLevels()
@@ -35,8 +38,9 @@ static int count=0;
 
 
 /* Levels structure*/
-void insertDecisionLevel(const VariableId var, const int decision)
+void insertDecisionLevel(VariableId var, int decision)
 {
+
     decisions[var] = decision;
 
     levels[levelNum].flipped = 0;
@@ -58,6 +62,7 @@ void removeDecisionLevel()
 {
 
     Decision *d = getLastDecision();
+
     decisions[d->id] = UNK;
     levelNum--;
 }
@@ -75,16 +80,52 @@ enum DecideState Decide(const Form* form)
     return ALL_ASSIGNED;
 }
 
-
 // if some clause have just false assigners then 
 // the BCP will return false
 bool BCP(Form *formula, const Decision decision)
 {
 
-   bool flag;
-   Clause *clause;
+    LiteralId falseValuedLiteral;
 
-    return true;
+    // pick the clause list from 
+    // the literal that have a false value
+    if(decision.id > 0 && decision.value == 1)
+        falseValuedLiteral = decision.id + 1;
+    else
+        falseValuedLiteral = -(decision.id + 1);
+ 
+    bool flag ;
+    ClauseNode *head;
+    Clause *auxClause;
+
+    head = formula->literals[getPos(falseValuedLiteral)];
+
+    // now if some clause have only negative
+    // values than this is a conflict
+    while(head!=NULL)
+    {
+        flag = false;
+        auxClause = head->clause;
+
+        for(int i = 0; i<auxClause->size; ++i)
+        {
+            // if have just a positive literal than
+            // this clause if ok
+            //
+            LiteralId lit = auxClause->literals[i];
+
+            if(decisions[((lit > 0)? lit : -lit)-1] != FALSE)
+                flag=true;
+        }
+
+        if(!flag)
+            return false;
+
+        head = head->next;
+    }
+
+   return true;
+
 }
 
 bool resolveConflict()
@@ -115,23 +156,24 @@ enum SolverResult dpll(Form *problem)
     while(true)
     {
 
-
         dState = Decide(problem);
+
+        while(!BCP(problem, *getLastDecision()))
+        {
+            if(!resolveConflict())
+                return UNSAT;
+        }
 
         if(dState == ALL_ASSIGNED)
         {
+            printf("Model\n");
             for(int i = 0; i<problem->numVars; ++i)
                 printf("%d ", decisions[i]);
             printf("\n");
             return SAT;
         }
 
-        while(!BCP(problem, *getLastDecision()))
-        {
-            if(!resolveConflict())
-                return UNSAT;
 
-                }
     }
 }
 
