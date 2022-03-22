@@ -73,7 +73,6 @@ enum DecideState Decide(const Form* form)
     if(levelNum < form->numVars)
     {
         insertDecisionLevel(levelNum, FALSE);
-
         return FOUND_VAR;
     }
 
@@ -89,10 +88,11 @@ bool BCP(Form *formula, const Decision decision)
 
     // pick the clause list from 
     // the literal that have a false value
-    if(decision.id > 0 && decision.value == 1)
+    if(decision.id > 0 && decision.value == TRUE)
         falseValuedLiteral = decision.id + 1;
     else
         falseValuedLiteral = -(decision.id + 1);
+
  
     bool flag ;
     ClauseNode *head;
@@ -109,6 +109,7 @@ bool BCP(Form *formula, const Decision decision)
 
         for(int i = 0; i<auxClause->size; ++i)
         {
+
             // if have just a positive literal than
             // this clause if ok
             //
@@ -125,7 +126,6 @@ bool BCP(Form *formula, const Decision decision)
     }
 
    return true;
-
 }
 
 bool resolveConflict()
@@ -150,7 +150,6 @@ bool resolveConflict()
 
 enum SolverResult dpll(Form *problem)
 {
-
     enum DecideState dState;
 
     while(true)
@@ -172,8 +171,6 @@ enum SolverResult dpll(Form *problem)
             printf("\n");
             return SAT;
         }
-
-
     }
 }
 

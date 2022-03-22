@@ -71,6 +71,7 @@ Form* readCNF(FILE *cnf)
 
     }
 
+    printf("Formula\n");
     // TODO set a debug mode
 
     ClauseNode *c = problemF->clauses;
