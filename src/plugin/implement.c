@@ -49,7 +49,7 @@ bool BCP(Form *formula, const Decision decision)
             //
             LiteralId lit = auxClause->literals[i];
 
-            if(getLitState(lit) != FALSE )
+            if(getVarState(lit) != FALSE )
                 flag=true;
 
         }
@@ -63,4 +63,23 @@ bool BCP(Form *formula, const Decision decision)
    return true;
 }
 
+bool resolveConflict()
+{
+
+    Decision *d;
+
+    while((d = getLastDecision()) && d->flipped)
+    {
+        removeDecisionLevel();
+    }
+
+    if(getLevel() <= 0)
+        return false;
+
+    d->value = TRUE;
+    setVarState(d->id, TRUE);
+    d->flipped = 1;
+
+    return true;
+}
 

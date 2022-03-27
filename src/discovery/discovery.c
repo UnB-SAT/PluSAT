@@ -34,6 +34,7 @@ void loadHooks(char *sharedObjectPath)
 
     hooks->decideHook = loadFunction(libhandle, "Decide");
     hooks->bcpHook = loadFunction(libhandle, "BCP");
+    hooks->conflictHook = loadFunction(libhandle, "resolveConflict");
 }
 
 Hooks* getHooks(){

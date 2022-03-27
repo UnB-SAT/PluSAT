@@ -21,8 +21,6 @@ enum DecideState {ALL_TRIED, FOUND_VAR, ALL_ASSIGNED};
  */
 enum DecideState Decide(const Form*);
 
-bool resolveConflict();
-
 void initDecisionLevels(const int);
 void cleanDecisionLevels();
 
@@ -35,10 +33,14 @@ void dpllRecursive(Form *problem);
 bool BCP(Form *, const Decision);
 
 void insertDecisionLevel(const VariableId, const int);
-
-bool resolveConflict();
+void removeDecisionLevel();
+Decision* getLastDecision();
 
 int getLevel();
 
-enum LiteralStates getLitState(LiteralId);
+enum LiteralStates getVarState(LiteralId);
+void setVarState(VariableId, enum LiteralStates);
+
+bool resolveConflict();
+
 #endif
