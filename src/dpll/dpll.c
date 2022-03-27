@@ -1,4 +1,5 @@
 #include "dpll.h"
+#include "discovery.h"
 #include "formula.h"
 
 #include <stdio.h>
@@ -7,28 +8,32 @@
 #include <string.h>
 
 // global variables
+uint16_t levelNum;
+Decision* levels;
+int* decisions;
 
-uint16_t levelNum = 0;
-static Decision* levels;
-static int* decisions;
+int getLevel()
+{
+    return levelNum;
+}
+
 
 void initDecisionLevels(const int numVars)
 {
     levelNum = 0;
+
     levels = malloc(sizeof(Decision)*numVars);
     decisions = malloc(sizeof(int)*numVars);
 
     for(int i =0; i<numVars; ++i)
         decisions[i] = UNK;
 }
-
 void cleanDecisionLevels()
 {
     free(levels);
     free(decisions);
 }
 
-static int count=0;
 
 /*
  * Aqui a variável e decidida
@@ -58,6 +63,13 @@ Decision* getLastDecision()
         return NULL;
 }
 
+enum LiteralStates getLitState(LiteralId lit)
+{
+
+    int pos = ((lit > 0)? lit : -lit) -1;
+    return decisions[pos];
+}
+
 void removeDecisionLevel()
 {
 
@@ -67,6 +79,7 @@ void removeDecisionLevel()
     levelNum--;
 }
 
+/*
 enum DecideState Decide(const Form* form)
 {
 
@@ -77,10 +90,12 @@ enum DecideState Decide(const Form* form)
     }
 
     return ALL_ASSIGNED;
-}
+}*/
 
 // if some clause have just false assigners then 
 // the BCP will return false
+
+/*
 bool BCP(Form *formula, const Decision decision)
 {
 
@@ -127,6 +142,7 @@ bool BCP(Form *formula, const Decision decision)
 
    return true;
 }
+*/
 
 bool resolveConflict()
 {
@@ -138,7 +154,7 @@ bool resolveConflict()
         removeDecisionLevel();
     }
 
-    if(levelNum <= 0)
+    if(getLevel() <= 0)
         return false;
 
     d->value = TRUE;
@@ -148,16 +164,25 @@ bool resolveConflict()
     return true;
 }
 
+enum DecideState (*fptr)(const Form*);
+
 enum SolverResult dpll(Form *problem)
 {
     enum DecideState dState;
 
+    Hooks* hooks = getHooks();
+    DecideHook decide= hooks->decideHook;
+    BCPHook bcpH = hooks->bcpHook;
+
+
     while(true)
     {
 
-        dState = Decide(problem);
+        dState = decide(problem);
 
-        while(!BCP(problem, *getLastDecision()))
+        //dState = Decide(problem);
+
+        while(!bcpH(problem, *getLastDecision()))
         {
             if(!resolveConflict())
                 return UNSAT;
@@ -167,7 +192,11 @@ enum SolverResult dpll(Form *problem)
         {
             printf("Model\n");
             for(int i = 0; i<problem->numVars; ++i)
-                printf("%d ", decisions[i]);
+            {
+                if(decisions[i] == TRUE) printf("TRUE ");
+                if(decisions[i] == FALSE) printf("FALSE ");
+                if(decisions[i] == UNK) printf("UNK ");
+            }
             printf("\n");
             return SAT;
         }

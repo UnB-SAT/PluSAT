@@ -2,6 +2,7 @@
 #include "dpll.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "discovery.h"
 
 int main(int argc, char **argv)
 {
@@ -13,11 +14,13 @@ int main(int argc, char **argv)
     }
 
     char *file = argv[1];
+    loadHooks("build/libimplement.so");
 
     Form *form;
     form = readCNF(fopen(file, "r"));
 
     initDecisionLevels(form->numVars);
+
     enum SolverResult r = dpll(form);
 
     printf("IS Sat: %d\n", r==SAT);

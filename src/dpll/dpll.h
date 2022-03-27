@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 typedef struct Decision
 {
     VariableId id;
@@ -39,4 +38,7 @@ void insertDecisionLevel(const VariableId, const int);
 
 bool resolveConflict();
 
+int getLevel();
+
+enum LiteralStates getLitState(LiteralId);
 #endif
