@@ -38,9 +38,11 @@ Decision* getLastDecision();
 
 int getLevel();
 
-enum LiteralStates getVarState(LiteralId);
-void setVarState(VariableId, enum LiteralStates);
+enum LiteralStates getLitState(LiteralId);
+void setVarState(VariableId, LitState);
+LitState getVarState(const VariableId var);
 
 bool resolveConflict();
+
 
 #endif

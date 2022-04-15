@@ -23,10 +23,15 @@ int main(int argc, char **argv)
 
     enum SolverResult r = dpll(form);
 
-    printf("IS Sat: %d\n", r==SAT);
-    cleanDecisionLevels();
 
-    //
+    if(r==SAT){
+        printf("Is SAT");
+    }else
+        printf("Not SAT");
+
+    printf("\n");
+
+    cleanDecisionLevels();
     freeForm(form);
 
     return 0;

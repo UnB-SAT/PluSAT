@@ -1,11 +1,20 @@
+CC=gcc
+CFLAGS = -fsanitize=address -fPIC 
+INCLUDES = -I src/
 
-all: build
+makebuilddir:
+	@echo "Create build directory"
+	mkdir -p build/
 
-build: 
-	gcc -Wall src/main.c src/dpll.c src/formula.c src/parser.c -Isrc -o solver
+build: makebuilddir
+	@echo "Bulding main"
+	$(CC) $(CFLAGS) -export-dynamic src/main.c src/parser.c src/dpll.c src/formula.c src/discovery.c $(INCLUDES) -o build/main.o
 
-run:
-	./solver inputs/test2.cnf
+clean: 
+	rm -rf build/
 
-clean:
-	rm solver
+plugin: makebuilddir
+	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/implement.c $(INCLUDES) -I src/plugin/
+
+run: build
+	./build/main.o data/inputs/test2.cnf

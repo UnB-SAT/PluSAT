@@ -63,11 +63,18 @@ Decision* getLastDecision()
         return NULL;
 }
 
-enum LiteralStates getVarState(LiteralId lit)
+enum LiteralStates getLitState(LiteralId lit)
 {
-
     int pos = ((lit > 0)? lit : -lit) -1;
-    return decisions[pos];
+
+    enum LiteralStates state = decisions[pos];
+
+    if(state == TRUE && lit < 0)
+    {
+        state = FALSE;
+    }
+
+    return state;
 }
 
 void setVarState(VariableId var, enum LiteralStates state)
@@ -105,8 +112,6 @@ bool resolveConflict()
 }
 */
 
-enum DecideState (*fptr)(const Form*);
-
 enum SolverResult dpll(Form *problem)
 {
     enum DecideState dState;
@@ -122,10 +127,25 @@ enum SolverResult dpll(Form *problem)
 
         dState = decide(problem);
 
-        //dState = Decide(problem);
+
+        printf("-----------\n");
+        for(int i = 0; i< levelNum; ++i)
+        {
+            printf("->%d %d %d\n", levels[i].id, levels[i].value, levels[i].flipped);
+        }
+        printf("-----------\n");
+
+        for(int i = 0; i<problem->numVars; ++i)
+        {
+            if(decisions[i] == TRUE) printf("TRUE ");
+            if(decisions[i] == FALSE) printf("FALSE ");
+            if(decisions[i] == UNK) printf("UNK ");
+        }
+        printf("\n");
 
         while(!bcpH(problem, *getLastDecision()))
         {
+
             if(!resolve())
                 return UNSAT;
         }
@@ -145,3 +165,8 @@ enum SolverResult dpll(Form *problem)
     }
 }
 
+
+LitState getVarState(const VariableId var)
+{
+    return decisions[var];
+}

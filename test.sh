@@ -1,5 +1,5 @@
 # !bin/bash
-FILES=($(ls ../data/*.cnf))
+FILES=($(ls ../uf20-91/*.cnf))
 
 for file in ${FILES[@]}
 do

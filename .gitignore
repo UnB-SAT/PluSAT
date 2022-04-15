@@ -1,5 +1,5 @@
 solver
 *.cnf
 *.out
-src/build/
+build/
 data/
