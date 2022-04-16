@@ -3,3 +3,4 @@ solver
 *.out
 build/
 data/
+*.log

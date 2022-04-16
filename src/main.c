@@ -34,5 +34,5 @@ int main(int argc, char **argv)
     cleanDecisionLevels();
     freeForm(form);
 
-    return 0;
+    return (r == SAT)? 1: 0 ;
 }

@@ -44,5 +44,7 @@ LitState getVarState(const VariableId var);
 
 bool resolveConflict();
 
+void debugDecision();
+
 
 #endif

@@ -33,26 +33,30 @@ enum DecideState Decide(const Form* form)
 
 bool BCP(Form *formula, const Decision decision)
 {
-
-    LiteralId falseValuedLiteral = -((decision.value) ? decision.id+1 : -decision.id -1);
-    bool flag ;
+    bool flag;
     ClauseNode *head;
-    Clause *auxClause;
+    Clause *clause;
 
+    LiteralId falseValuedLiteral = ((decision.value == FALSE) ? decision.id+1 : -decision.id -1);
 
     head = formula->literals[getPos(falseValuedLiteral)];
+
+    printf("false literal %d\n", falseValuedLiteral);
+
 
     // now if some clause have only negative
     // values than this is a conflict
     while(head!=NULL)
     {
+        printf("||||\n");
         flag = false;
-        auxClause = head->clause;
+        clause = head->clause;
 
-        for(int i = 0; i<auxClause->size; ++i)
+        for(int i = 0; i<clause->size; ++i)
         {
-            LiteralId lit = auxClause->literals[i];
+            LiteralId lit = clause->literals[i];
 
+            printf("Literal %d state %d\n", lit, getLitState(lit));
             if(getLitState(lit) != FALSE)
                 flag=true;
         }
@@ -68,7 +72,11 @@ bool BCP(Form *formula, const Decision decision)
 
 bool resolveConflict()
 {
+    printf("Conflito level: %d\n", getLevel());
     Decision *d = getLastDecision();
+
+
+    debugDecision();
 
     while(d!=NULL && d->flipped)
     {
@@ -77,7 +85,10 @@ bool resolveConflict()
     }
 
     if(getLevel() <= 0)
+    {
+        printf(">>>>>>>>>>><<<<<<<<<<\n");
         return false;
+    }
 
 
     d->value = TRUE;

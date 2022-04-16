@@ -63,16 +63,17 @@ Decision* getLastDecision()
         return NULL;
 }
 
+// Get var position
 enum LiteralStates getLitState(LiteralId lit)
 {
-    int pos = ((lit > 0)? lit : -lit) -1;
+    int varPos = ((lit > 0)? lit : -lit) -1;
 
-    enum LiteralStates state = decisions[pos];
+    enum LiteralStates state = decisions[varPos];
 
     if(state == TRUE && lit < 0)
-    {
         state = FALSE;
-    }
+    else if(state == FALSE && lit < 0)
+        state = TRUE;
 
     return state;
 }
@@ -111,6 +112,16 @@ bool resolveConflict()
     return true;
 }
 */
+
+void debugDecision()
+{
+    printf("-----------\n");
+    for(int i = 0; i< levelNum; ++i)
+    {
+        printf("->%d %d %d\n", levels[i].id, levels[i].value, levels[i].flipped);
+    }
+    printf("-----------\n");
+}
 
 enum SolverResult dpll(Form *problem)
 {
