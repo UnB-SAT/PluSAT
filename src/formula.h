@@ -52,4 +52,6 @@ ClauseNode* addNodeOnList(Clause*, ClauseNode*);
 ClauseNode *newNode(Clause*);
 uint16_t getPos(const LiteralId);
 
+void PreProcessing(Form *);
+
 #endif

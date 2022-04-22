@@ -1,7 +1,7 @@
-#include "parser.h"
-#include "dpll.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "parser.h"
+#include "dpll.h"
 #include "discovery.h"
 
 int main(int argc, char **argv)
@@ -16,13 +16,16 @@ int main(int argc, char **argv)
     char *file = argv[1];
     loadHooks("build/libimplement.so");
 
+    Hooks *hooks = getHooks();
+
     Form *form;
     form = readCNF(fopen(file, "r"));
+
+    hooks->preProcessing(form);
 
     initDecisionLevels(form->numVars);
 
     enum SolverResult r = dpll(form);
-
 
     if(r==SAT){
         printf("Is SAT");

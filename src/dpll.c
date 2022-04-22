@@ -91,27 +91,6 @@ void removeDecisionLevel()
     decisions[d->id] = UNK;
     levelNum--;
 }
-/*
-bool resolveConflict()
-{
-
-    Decision *d;
-
-    while((d = getLastDecision()) && d->flipped)
-    {
-        removeDecisionLevel();
-    }
-
-    if(getLevel() <= 0)
-        return false;
-
-    d->value = TRUE;
-    setVarState(d->id, TRUE);
-    d->flipped = 1;
-
-    return true;
-}
-*/
 
 void debugDecision()
 {

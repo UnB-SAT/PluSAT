@@ -7,12 +7,14 @@
 typedef enum DecideState (*DecideHook)(const Form*);
 typedef bool (*BCPHook)(Form*, const Decision);
 typedef bool (*ResolveConflictHook)();
+typedef void (*PreProcessingHook)(Form*);
 
 typedef struct Hooks
 {
     DecideHook decideHook;
     BCPHook bcpHook;
     ResolveConflictHook conflictHook;
+    PreProcessingHook preProcessing;
 }Hooks;
 
 void loadHooks(char *);

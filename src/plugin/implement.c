@@ -1,8 +1,9 @@
 #include "dpll.h"
 #include "formula.h"
 #include <stdio.h>
-
 #include <stdlib.h>
+
+void PreProcessing(Form* form){}
 
 enum DecideState Decide(const Form* form)
 {

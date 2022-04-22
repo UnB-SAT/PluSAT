@@ -10,9 +10,17 @@ typedef struct Decision
     VariableId id;
     uint16_t value;
     bool flipped;
+    struct DecisionList *consequences;
 }Decision;
 
+typedef struct DecisionList
+{
+    Decision *decision;
+    struct DecisionList *next;
+}DecisionList;
+
 enum DecideState {ALL_TRIED, FOUND_VAR, ALL_ASSIGNED};
+enum SolverResult {UNSAT, SAT};
 
 /*
  * Decide a literal and set them on the level system
@@ -23,9 +31,6 @@ enum DecideState Decide(const Form*);
 
 void initDecisionLevels(const int);
 void cleanDecisionLevels();
-
-
-enum SolverResult {UNSAT, SAT};
 
 enum SolverResult dpll(Form *problem);
 void dpllRecursive(Form *problem);
@@ -43,8 +48,6 @@ void setVarState(VariableId, LitState);
 LitState getVarState(const VariableId var);
 
 bool resolveConflict();
-
 void debugDecision();
-
 
 #endif
