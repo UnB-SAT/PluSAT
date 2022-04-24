@@ -117,22 +117,6 @@ enum SolverResult dpll(Form *problem)
 
         dState = decide(problem);
 
-
-        printf("-----------\n");
-        for(int i = 0; i< levelNum; ++i)
-        {
-            printf("->%d %d %d\n", levels[i].id, levels[i].value, levels[i].flipped);
-        }
-        printf("-----------\n");
-
-        for(int i = 0; i<problem->numVars; ++i)
-        {
-            if(decisions[i] == TRUE) printf("TRUE ");
-            if(decisions[i] == FALSE) printf("FALSE ");
-            if(decisions[i] == UNK) printf("UNK ");
-        }
-        printf("\n");
-
         while(!bcpH(problem, *getLastDecision()))
         {
 

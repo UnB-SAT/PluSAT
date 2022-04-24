@@ -14,7 +14,7 @@ clean:
 	rm -rf build/
 
 plugin: makebuilddir
-	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/implement.c $(INCLUDES) -I src/plugin/
+	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/implement.c $(INCLUDES)
 
 run: build
 	./build/main.o data/inputs/test2.cnf
