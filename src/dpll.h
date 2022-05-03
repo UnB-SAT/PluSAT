@@ -38,7 +38,7 @@ void dpllRecursive(Form *problem);
 bool BCP(Form *, const Decision);
 
 void insertDecisionLevel(const VariableId, const int);
-void removeDecisionLevel();
+void removeLastDecision();
 Decision* getLastDecision();
 
 int getLevel();
@@ -47,7 +47,13 @@ enum LiteralStates getLitState(LiteralId);
 void setVarState(VariableId, LitState);
 LitState getVarState(const VariableId var);
 
-bool resolveConflict();
+int resolveConflict();
 void debugDecision();
+
+Decision* getDecisions();
+
+ClauseNode* getLiteralClauses(const LiteralId lit, const Form* form);
+
+void backtrackTo(uint16_t);
 
 #endif

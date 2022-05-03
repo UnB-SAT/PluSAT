@@ -10,8 +10,7 @@ typedef enum LiteralStates{FALSE, TRUE, UNK} LitState;
 typedef int16_t LiteralId;
 typedef int16_t VariableId;
 
-typedef struct Clause
-{
+typedef struct Clause{
     uint8_t size;
     LiteralId* literals;
 }Clause;
@@ -26,8 +25,6 @@ typedef struct Node  ClauseNode;
 
 Clause* newClause(LiteralId*, uint8_t);
 void freeClause(Clause*);
-
-void freeList(ClauseNode*);
 
 // FORM
 
@@ -47,11 +44,16 @@ typedef struct Form
 
 Form* newForm(uint16_t);
 void freeForm(Form*);
+
 void addClause(Clause*, Form*);
+
 ClauseNode* addNodeOnList(Clause*, ClauseNode*);
+void freeList(ClauseNode*);
+
+// Create ClauseNode
 ClauseNode *newNode(Clause*);
 uint16_t getPos(const LiteralId);
 
-void PreProcessing(Form *);
+void PreProcessing(Form*);
 
 #endif

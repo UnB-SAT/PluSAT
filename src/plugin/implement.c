@@ -3,7 +3,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void PreProcessing(Form* form){}
+void PreProcessing(Form* form){
+
+    /*
+    for(int i = 0; i < 2*form->numVars; ++i){
+        if(form->literals[i] == NULL){
+            if(i%2==0 && form->literals[i+1] != NULL)
+                setVarState((int)i/2, TRUE);
+
+            if(i%2!=0 && form->literals[i-1] != NULL)
+                setVarState((int)((i+1)/2), TRUE);
+        }
+    }
+    */
+}
 
 enum DecideState Decide(const Form* form)
 {
@@ -49,7 +62,6 @@ bool BCP(Form *formula, const Decision decision)
     // values than this is a conflict
     while(head!=NULL)
     {
-        printf("||||\n");
         flag = false;
         clause = head->clause;
 
@@ -62,8 +74,10 @@ bool BCP(Form *formula, const Decision decision)
                 flag=true;
         }
 
-        if(!flag)
+        if(!flag){
+            printf("Conflito!!!\n");
             return false;
+        }
 
         head = head->next;
    }
@@ -71,31 +85,17 @@ bool BCP(Form *formula, const Decision decision)
    return true;
 }
 
-bool resolveConflict()
+int resolveConflict()
 {
-    printf("Conflito level: %d\n", getLevel());
-    Decision *d = getLastDecision();
+    Decision* decisions =  getDecisions();
 
+    int i = getLevel()-1;
 
-    debugDecision();
+    for(; i>=0; --i)
+        if(decisions[i].flipped == false)
+            break;
 
-    while(d!=NULL && d->flipped)
-    {
-        removeDecisionLevel();
-        d = getLastDecision();
-    }
-
-    if(getLevel() <= 0)
-    {
-        printf(">>>>>>>>>>><<<<<<<<<<\n");
-        return false;
-    }
-
-
-    d->value = TRUE;
-    setVarState(d->id, TRUE);
-    d->flipped = 1;
-
-    return true;
+    printf("Retornar %d\n", i);
+    return i+1;
 }
 

@@ -17,6 +17,11 @@ int getLevel()
     return levelNum;
 }
 
+Decision* getDecisions()
+{
+    return levels;
+}
+
 
 void initDecisionLevels(const int numVars)
 {
@@ -83,11 +88,9 @@ void setVarState(VariableId var, enum LiteralStates state)
     decisions[var] = state;
 }
 
-void removeDecisionLevel()
+void removeLastDecision()
 {
-
     Decision *d = getLastDecision();
-
     decisions[d->id] = UNK;
     levelNum--;
 }
@@ -111,6 +114,8 @@ enum SolverResult dpll(Form *problem)
     BCPHook bcpH = hooks->bcpHook;
     ResolveConflictHook resolve = hooks->conflictHook;
 
+    int goBack;
+
 
     while(true)
     {
@@ -119,10 +124,22 @@ enum SolverResult dpll(Form *problem)
 
         while(!bcpH(problem, *getLastDecision()))
         {
+            goBack = resolve();
 
-            if(!resolve())
+            if(goBack == 0)
                 return UNSAT;
+            else
+                backtrackTo(goBack);
         }
+
+        printf("==========Model==========\n");
+        for(int i = 0; i<problem->numVars; ++i)
+        {
+            if(decisions[i] == TRUE) printf("TRUE ");
+            if(decisions[i] == FALSE) printf("FALSE ");
+            if(decisions[i] == UNK) printf("UNK ");
+        }
+        printf("\n");
 
         if(dState == ALL_ASSIGNED)
         {
@@ -144,3 +161,33 @@ LitState getVarState(const VariableId var)
 {
     return decisions[var];
 }
+
+ClauseNode* getLiteralClauses(const LiteralId lit, const Form* form)
+{
+    return form->literals[getPos(lit)];
+}
+
+void backtrackTo(uint16_t n)
+{
+   printf("Inverting level %d\n", n);
+   while(levelNum > n )
+   {
+       setVarState(getLastDecision()->id, UNK);
+       removeLastDecision();
+   }
+
+   enum LiteralStates state = levels[levelNum-1].value;
+
+   if(state == TRUE)
+   {
+       levels[levelNum-1].value = FALSE;
+       setVarState(levels[levelNum-1].id, FALSE);
+   }else if(state == FALSE)
+   {    
+       levels[levelNum-1].value = TRUE;
+       setVarState(levels[levelNum-1].id, TRUE);
+   }
+
+   levels[levelNum-1].flipped = true;
+}
+
