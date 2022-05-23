@@ -1,7 +1,6 @@
 #include "dpll.h"
 #include "formula.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 void PreProcessing(Form* form){
@@ -44,10 +43,6 @@ bool BCP(Form *formula, const Decision decision)
 
     head = formula->literals[getPos(falseValuedLiteral)];
 
-
-
-    // now if some clause have only negative
-    // values than this is a conflict
     while(head!=NULL)
     {
         flag = false;
@@ -61,9 +56,7 @@ bool BCP(Form *formula, const Decision decision)
                 flag=true;
         }
 
-        if(!flag){
-            return false;
-        }
+        if(!flag) return false;
 
         head = head->next;
    }

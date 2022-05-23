@@ -39,14 +39,6 @@ void cleanDecisionLevels()
     free(decisions);
 }
 
-
-/*
- * Aqui a variável e decidida
- * Inserida a decisão no nível
- */
-
-
-
 /* Levels structure*/
 void insertDecisionLevel(VariableId var, int decision)
 {
@@ -85,7 +77,7 @@ enum LiteralStates getLitState(LiteralId lit)
 
 void setVarState(VariableId var, enum LiteralStates state)
 { 
-    decisions[var] = state;
+    decisions[(int)var] = state;
 }
 
 void removeLastDecision()
@@ -132,15 +124,6 @@ enum SolverResult dpll(Form *problem)
                 backtrackTo(goBack);
         }
 
-        printf("==========Model==========\n");
-        for(int i = 0; i<problem->numVars; ++i)
-        {
-            if(decisions[i] == TRUE) printf("TRUE ");
-            if(decisions[i] == FALSE) printf("FALSE ");
-            if(decisions[i] == UNK) printf("UNK ");
-        }
-        printf("\n");
-
         if(dState == ALL_ASSIGNED)
         {
             printf("Model\n");
@@ -169,7 +152,6 @@ ClauseNode* getLiteralClauses(const LiteralId lit, const Form* form)
 
 void backtrackTo(uint16_t n)
 {
-   printf("Inverting level %d\n", n);
    while(levelNum > n )
    {
        setVarState(getLastDecision()->id, UNK);

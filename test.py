@@ -22,6 +22,7 @@ if __name__ == '__main__':
 
         start = time.time()
         file = os.path.join(directory, file)
+        logging.info(f"running file: {file}")
         r = subprocess.run(['./build/main.o', file],)
         logging.info(f"file: {file} - { 1 if r.returncode == 1 else 0}")
         end = time.time()

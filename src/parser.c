@@ -71,6 +71,7 @@ Form* readCNF(FILE *cnf)
 
     }
 
+    /*
     printf("Formula\n");
     // TODO set a debug mode
 
@@ -90,8 +91,7 @@ Form* readCNF(FILE *cnf)
         head = head->next;
         printf("\n");
     }
-
-
+    */
 
     free(literalBuffer);
 

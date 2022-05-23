@@ -25,15 +25,18 @@ int main(int argc, char **argv)
         printf("Setting value %s\n", libplusat);
     }
 
+    printf("FILE: %s\n", file);
+
 
     loadHooks(libplusat);
     Hooks *hooks = getHooks();
 
     Form *form = readCNF(fopen(file, "r"));
 
+    initDecisionLevels(form->numVars);
+
     hooks->preProcessing(form);
 
-    initDecisionLevels(form->numVars);
     enum SolverResult r = dpll(form);
 
     if(r==SAT)
@@ -45,5 +48,6 @@ int main(int argc, char **argv)
     cleanDecisionLevels();
     freeForm(form);
 
-    return (r == SAT)? 1: 0 ;
+    return 0;
+    //return (r == SAT)? 1: 0 ;
 }
