@@ -14,7 +14,7 @@ int main(int argc, char **argv)
         exit(5);
     }
 
-    char *file = argv[1];
+    const char *file = argv[1];
 
     char *libplusat = getenv("LIB_PLUSAT");
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     enum SolverResult r = dpll(form);
 
     if(r==SAT)
-        printf("Is SAT");
+        printf("\033[33mIs \033[0mSAT");
     else
         printf("Not SAT");
     printf("\n");

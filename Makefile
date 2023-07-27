@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -fsanitize=address -fPIC 
+CFLAGS = -fPIC 
 INCLUDES = -I src/
 
 makebuilddir:
@@ -14,7 +14,7 @@ clean:
 	rm -rf build/
 
 plugin: makebuilddir
-	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/implement.c $(INCLUDES)
+	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/clause_learning.c $(INCLUDES)
 
 run: build
-	./build/main.o data/inputs/test2.cnf
+	./build/main.o ~/Downloads/cnf/uf20-0199.cnf

@@ -102,7 +102,7 @@ enum SolverResult dpll(Form *problem)
     enum DecideState dState;
 
     Hooks* hooks = getHooks();
-    DecideHook decide= hooks->decideHook;
+    DecideHook decide = hooks->decideHook;
     BCPHook bcpH = hooks->bcpHook;
     ResolveConflictHook resolve = hooks->conflictHook;
 

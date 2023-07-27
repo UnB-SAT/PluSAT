@@ -8,7 +8,7 @@
 typedef enum LiteralStates{FALSE, TRUE, UNK} LitState;
 
 typedef int16_t LiteralId;
-typedef int16_t VariableId;
+typedef uint16_t VariableId;
 
 typedef struct Clause{
     uint8_t size;
