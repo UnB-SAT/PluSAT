@@ -5,11 +5,12 @@
 #include <stdlib.h>
 
 void PreProcessing(Form* form){
+    // Trabalhar estrutura de dados
 }
 
 enum DecideState Decide(const Form* form)
 {
-
+    //VSIDS
     ClauseNode* list = form->clauses;
     while(list != NULL)
     {
@@ -19,7 +20,8 @@ enum DecideState Decide(const Form* form)
         for(int i = 0; i<clause->size; ++i)
         {
             LiteralId lit = clause->literals[i];
-            lit = ((lit > 0 )? lit : -lit);
+            //printf("Lit: %d\n", lit);
+            lit = ((lit > 0 )? lit : -lit); //Pega a variável
             if(getVarState(lit-1) == UNK)
             {
                 insertDecisionLevel(lit-1, FALSE);

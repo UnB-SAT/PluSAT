@@ -4,3 +4,4 @@ solver
 build/
 data/
 *.log
+.vscode/
