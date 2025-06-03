@@ -14,7 +14,7 @@ clean:
 	rm -rf build/
 
 plugin: makebuilddir
-	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/clause_learning.c $(INCLUDES)
+	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/simple.c $(INCLUDES)
 
 run: build
-	./build/main.o ~/Downloads/cnf/uf20-91/uf20-0199.cnf
+	./build/main.o ~/Downloads/cnf50-218/uuf50-022.cnf
