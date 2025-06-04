@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 
     if(argc == 1)
     {
-        printf("Don't have a file\n");
+        printf("c Don't have a file\n");
         exit(5);
     }
 

@@ -12,7 +12,7 @@ void *loadFunction(void *libhandle, char* funcName){
 
     if(func == NULL)
     {
-        printf("Function import ERROR\n");
+        printf("c Function import ERROR\n");
         exit(1);
     }
 
@@ -28,7 +28,7 @@ void loadHooks(char *sharedObjectPath)
     hooks = malloc(sizeof(Hooks));
 
     if(libhandle == NULL){
-       printf("%s\n", dlerror());
+       printf("c %s\n", dlerror());
        exit(1);
     }
 
