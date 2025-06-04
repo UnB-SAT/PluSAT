@@ -13,11 +13,11 @@ void PreProcessing(Form* form){
 
         for(int j = 0; j < pivot->clause->size; ++j)
         {
-            printf("%d ", pivot->clause->literals[j]);
+            //printf("%d ", pivot->clause->literals[j]);
         }
 
         head = head->next;
-        printf("\n");
+        //printf("\n");
     }
 }
 
