@@ -126,15 +126,16 @@ enum SolverResult dpll(Form *problem)
 
         if(dState == ALL_ASSIGNED)
         {
-            printf("Model\n");
+            printf("v ");
             for(int i = 0; i<problem->numVars; ++i)
             {
-                if(decisions[i] == TRUE) printf("TRUE ");
-                if(decisions[i] == FALSE) printf("FALSE ");
-                if(decisions[i] == UNK) printf("UNK ");
+                if(decisions[i] == TRUE) printf("%d ",i+1);
+                if(decisions[i] == FALSE) printf("-%d ",i+1);
+                //if(decisions[i] == UNK) printf("UNK ");
             }
-            printf("\n");
+            printf("0\n");
             return SAT;
+
         }
     }
 }
