@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -fPIC 
+CFLAGS = -fPIC -O2
 INCLUDES = -I src/
 
 makebuilddir:
