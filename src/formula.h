@@ -30,7 +30,7 @@ void freeClause(Clause*);
 
 typedef struct Form
 {
-    int16_t numClauses;
+    int numClauses;
     int16_t numVars;
 
     // Clauses to be cleaned
