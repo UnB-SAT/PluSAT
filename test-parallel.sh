@@ -1,8 +1,29 @@
 #!/usr/bin/bash
 # shellcheck disable=SC2016
 printf '%s\n' "$@" | xargs -P "$(nproc)" -I {} bash -c '
-    if ./build/main.o "$1"; then
-        printf "\033[1;31mError while running solver on %s\033[0m\n" "$1" >&2
+    file="$1"
+
+    # Run clasp and extract result
+    claspResult=$(clasp "$file" | grep -Eo "SATISFIABLE|UNSATISFIABLE" | tail -n1)
+
+    # Run your solver and capture output and exit code
+    myOutput=$(./build/main.o "$file")
+    exitCode=$?
+
+    if [[ $exitCode -eq 1 ]]; then
+        printf "\033[1;31mError while running solver on %s\033[0m\n" "$file" >&2
         exit 1
+    fi
+
+    # Extract result from your solver output
+    myResult=$(echo "$myOutput" | grep -Eo "SATISFIABLE|UNSATISFIABLE" | tail -n1)
+
+    # Compare results
+    if [[ "$claspResult" != "$myResult" ]]; then
+        printf "\033[1;31mMismatch on file %s\033[0m\n" "$file"
+        echo "  clasp: $claspResult"
+        echo "  yours: $myResult"
+    else
+        printf "\033[1;32mMatch on file %s: %s\033[0m\n" "$file" "$myResult"
     fi
 ' _ {}
