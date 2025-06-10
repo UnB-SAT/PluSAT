@@ -1,20 +1,33 @@
-CC=gcc
+
+CC = gcc
 CFLAGS = -fPIC -O2
 INCLUDES = -I src/
+BUILDDIR = build
+SRCDIR = src
 
-makebuilddir:
-	@echo "Create build directory"
-	mkdir -p build/
+# Source files
+MAIN_SRCS = $(SRCDIR)/main.c $(SRCDIR)/parser.c $(SRCDIR)/dpll.c $(SRCDIR)/formula.c $(SRCDIR)/discovery.c
+PLUGIN_SRCS = $(SRCDIR)/plugin/plugin4.c
 
-build: makebuilddir
-	@echo "Bulding main"
-	$(CC) $(CFLAGS) -export-dynamic src/main.c src/parser.c src/dpll.c src/formula.c src/discovery.c $(INCLUDES) -o build/main.o
+# Targets
+MAIN_TARGET = $(BUILDDIR)/main.o
+PLUGIN_TARGET = $(BUILDDIR)/libimplement.so
 
-clean: 
-	rm -rf build/
+.PHONY: all clean
 
-plugin: makebuilddir
-	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/plugin4.c $(INCLUDES)
+all: $(MAIN_TARGET) $(PLUGIN_TARGET)
 
-run: build
-	./build/main.o uff50-218/uff50-01.cnf
+$(BUILDDIR):
+	@echo "Creating build directory"
+	@mkdir -p $@
+
+$(MAIN_TARGET): $(MAIN_SRCS) | $(BUILDDIR)
+	@echo "Building main"
+	$(CC) $(CFLAGS) -export-dynamic $^ $(INCLUDES) -o $@
+
+$(PLUGIN_TARGET): $(PLUGIN_SRCS) | $(BUILDDIR)
+	@echo "Building plugin"
+	$(CC) $(CFLAGS) -shared $(INCLUDES) -o $@ $^
+
+clean:
+	rm -rf $(BUILDDIR)/
