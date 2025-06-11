@@ -12,47 +12,45 @@ void PreProcessing(Form* form){
 }
 
 typedef struct {
+    int positiveCount;
+    int negativeCount;
+} LiteralCounts;
+typedef struct {
     int variableCount; // Redundante
-    int *trueCounts;
-    int *falseCounts;
+    LiteralCounts *literal_counts;
 } DLISCounts;
 
 /* Given a variable "v", if the most frequent literal is
  * ~v, the function returns -v, otherwise it returns
- * positive v. Literals start at 1
+ * positive v. Literals are 1 indexed
  */
 int getMostFrequentLiteral(const DLISCounts* counts) {
     if (counts == NULL) {
         fprintf(stderr, "getMostFrequentLiteral: NULL DLISCounts\n");
         abort();
     }
-    if (counts->trueCounts == NULL) {
+    if (counts->literal_counts == NULL) {
         fprintf(stderr, "Null pointer in DLIS true literal counts");
-        abort();
-    }
-    if (counts->falseCounts == NULL) {
-        fprintf(stderr, "Null pointer in DLIS false literal counts");
         abort();
     }
     int maxCount = INT_MIN;
     int maxLiteral = INT_MIN;
     for (size_t i = 0; i < counts->variableCount; i++) {
-        if (counts->trueCounts[i] > maxCount) {
-            maxCount = counts->trueCounts[i];
+        if (counts->literal_counts[i].positiveCount > maxCount) {
+            maxCount = counts->literal_counts[i].positiveCount;
             maxLiteral = i+1;
-        } else if (counts->falseCounts[i] > maxCount) {
-            maxCount = counts->falseCounts[i];
+        } else if (counts->literal_counts[i].negativeCount > maxCount) {
+            maxCount = counts->literal_counts[i].negativeCount;
             maxLiteral = -(i+1);
         }
     }
     return maxLiteral;
 }
 
-DLISCounts* initCounts(int numVars) {
+DLISCounts* initCounts(const int numVars) {
     DLISCounts* counts = malloc(sizeof(DLISCounts));
     counts->variableCount = numVars;
-    counts->trueCounts = calloc(numVars, sizeof(int));
-    counts->falseCounts = calloc(numVars, sizeof(int));
+    counts->literal_counts = calloc(numVars, sizeof(LiteralCounts));
     return counts;
 }
 
@@ -61,8 +59,7 @@ void freeCounts(DLISCounts* counts) {
         fprintf(stderr, "NULL DLISCounts when freeing\n");
         abort();
     }
-    free(counts->trueCounts);
-    free(counts->falseCounts);
+    free(counts->literal_counts);
     free(counts);
 }
 
@@ -76,16 +73,25 @@ enum DecideState Decide(const Form* form) {
             const LiteralId literal = currentClause->literals[literalIdx];
             const int variableId = abs(literal)-1;
             if (literal > 0)
-                counts->trueCounts[variableId]++;
+                counts->literal_counts[variableId].positiveCount++;
             else
-                counts->falseCounts[variableId]++;
+                counts->literal_counts[variableId].negativeCount++;
             if (getVarState(variableId) == UNK) allDecided = false;
         }
     }
+    /* NOTE: Era para ter uma lista de variáveis e suas
+     * decisões para não ter que iterar por todas as cláusulas
+     * para verificar se todas as variáveis já foram decididas
+     */
+    if (allDecided) {
+        freeCounts(counts);
+        return ALL_ASSIGNED;
+    }
+
     const int mostFrequentLiteral = getMostFrequentLiteral(counts);
     insertDecisionLevel(abs(mostFrequentLiteral)-1, mostFrequentLiteral > 0 ? TRUE : FALSE);
     freeCounts(counts);
-    return allDecided ? ALL_ASSIGNED : FOUND_VAR;
+    return FOUND_VAR;
 }
 bool BCP(Form *formula, const Decision decision)
 {
