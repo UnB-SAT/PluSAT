@@ -11,86 +11,82 @@
 void PreProcessing(Form* form){
 }
 
-
-
-// NOTE: tá implementado com lista, mas vamos trocar para heap
-struct DLISCounts {
+typedef struct {
     int variableCount; // Redundante
     int *trueCounts;
     int *falseCounts;
-};
+} DLISCounts;
 
 /* Given a variable "v", if the most frequent literal is
  * ~v, the function returns -v, otherwise it returns
  * positive v. Literals start at 1
  */
-int getMostFrequentLiteral(const struct DLISCounts counts) {
-    if (counts.trueCounts == NULL) {
+int getMostFrequentLiteral(const DLISCounts* counts) {
+    if (counts == NULL) {
+        fprintf(stderr, "getMostFrequentLiteral: NULL DLISCounts\n");
+        abort();
+    }
+    if (counts->trueCounts == NULL) {
         fprintf(stderr, "Null pointer in DLIS true literal counts");
         abort();
     }
-    if (counts.falseCounts == NULL) {
+    if (counts->falseCounts == NULL) {
         fprintf(stderr, "Null pointer in DLIS false literal counts");
         abort();
     }
-
     int maxCount = INT_MIN;
     int maxLiteral = INT_MIN;
-    for (size_t i = 0; i < counts.variableCount; i++) {
-        if (counts.trueCounts[i] > maxCount) {
-            maxCount = counts.trueCounts[i];
+    for (size_t i = 0; i < counts->variableCount; i++) {
+        if (counts->trueCounts[i] > maxCount) {
+            maxCount = counts->trueCounts[i];
             maxLiteral = i+1;
-        } else if (counts.falseCounts[i] > maxCount) {
-            maxCount = counts.falseCounts[i];
+        } else if (counts->falseCounts[i] > maxCount) {
+            maxCount = counts->falseCounts[i];
             maxLiteral = -(i+1);
         }
     }
-
     return maxLiteral;
 }
 
-struct DLISCounts initCounts(int numVars) {
-    struct DLISCounts counts;
-    counts.variableCount = numVars;
-    counts.trueCounts = calloc(numVars, sizeof(int));
-    counts.falseCounts = calloc(numVars, sizeof(int));
-
+DLISCounts* initCounts(int numVars) {
+    DLISCounts* counts = malloc(sizeof(DLISCounts));
+    counts->variableCount = numVars;
+    counts->trueCounts = calloc(numVars, sizeof(int));
+    counts->falseCounts = calloc(numVars, sizeof(int));
     return counts;
 }
 
-void freeCounts(struct DLISCounts counts) {
-    free(counts.trueCounts);
-    free(counts.falseCounts);
+void freeCounts(DLISCounts* counts) {
+    if (counts == NULL) {
+        fprintf(stderr, "NULL DLISCounts when freeing\n");
+        abort();
+    }
+    free(counts->trueCounts);
+    free(counts->falseCounts);
+    free(counts);
 }
 
 // NOTE: Alocar e desalocar repetidamente é rui
 enum DecideState Decide(const Form* form) {
     bool allDecided = true;
-    struct DLISCounts counts = initCounts(form->numVars);
-    for (ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
-        Clause *currentClause = currentNode->clause;
+    DLISCounts* counts = initCounts(form->numVars);
+    for (const ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
+        const Clause *currentClause = currentNode->clause;
         for(int literalIdx = 0; literalIdx<currentClause->size; ++literalIdx) {
-            const LiteralId lit = currentClause->literals[literalIdx];
-            const int variableId = abs(lit)-1;
-            if (lit > 0)
-                counts.trueCounts[variableId]++;
+            const LiteralId literal = currentClause->literals[literalIdx];
+            const int variableId = abs(literal)-1;
+            if (literal > 0)
+                counts->trueCounts[variableId]++;
             else
-                counts.falseCounts[variableId]++;
-            if(getVarState(variableId) == UNK)
-                allDecided = false;
+                counts->falseCounts[variableId]++;
+            if (getVarState(variableId) == UNK) allDecided = false;
         }
     }
-
     const int mostFrequentLiteral = getMostFrequentLiteral(counts);
     insertDecisionLevel(abs(mostFrequentLiteral)-1, mostFrequentLiteral > 0 ? TRUE : FALSE);
     freeCounts(counts);
-
-    if (allDecided)
-        return ALL_ASSIGNED;
-
-    return FOUND_VAR;
+    return allDecided ? ALL_ASSIGNED : FOUND_VAR;
 }
-
 bool BCP(Form *formula, const Decision decision)
 {
     bool flag;
