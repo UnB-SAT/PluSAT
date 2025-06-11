@@ -149,19 +149,25 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
 }
 
 // NOTE: Alocar e desalocar repetidamente é rui
+// NOTE: segfault provavelmente significa que estamos fazendo mais decisões do que variáveis
 enum DecideState Decide(const Form* form) {
     bool allDecided = true;
     DLISCounts* counts = startDLIS(form->numVars);
     for (const ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
+        /* NOTE: Ter um tipo nó separado da cláusula em vez de usar uma lista encadeada
+         * intrusiva é ineficiente e feio
+         */
         const Clause *currentClause = currentNode->clause;
         for(int literalIdx = 0; literalIdx<currentClause->size; ++literalIdx) {
             const LiteralId literal = currentClause->literals[literalIdx];
             const int variableId = abs(literal)-1;
-            if (literal > 0)
-                appendCount(counts->positiveLiterals, variableId);
-            else
-                appendCount(counts->negativeLiterals, variableId);
-            if (getVarState(variableId) == UNK) allDecided = false;
+            if (getVarState(variableId) == UNK) {
+                allDecided = false;
+                if (literal > 0)
+                    appendCount(counts->positiveLiterals, variableId);
+                else
+                    appendCount(counts->negativeLiterals, variableId);
+            }
         }
     }
     /* NOTE: Era para ter uma lista de variáveis e suas
@@ -169,11 +175,18 @@ enum DecideState Decide(const Form* form) {
      * para verificar se todas as variáveis já foram decididas
      */
     if (allDecided) {
+
+#ifdef DEBUG
+        printf("Decision(%d/%d): all variables assigned\n");
+#endif
         freeDLIS(counts);
         return ALL_ASSIGNED;
     }
 
     const int mostFrequentLiteral = getMostFrequentLiteral(counts);
+#ifdef DEBUG
+    printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, mostFrequentLiteral);
+#endif
     insertDecisionLevel(abs(mostFrequentLiteral)-1, mostFrequentLiteral > 0 ? TRUE : FALSE);
     freeDLIS(counts);
     return FOUND_VAR;
