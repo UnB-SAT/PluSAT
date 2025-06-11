@@ -190,7 +190,7 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
     const LiteralCount *maxPositive = peek(dlis->positiveLiterals);
     const LiteralCount *maxNegative = peek(dlis->negativeLiterals);
 
-    if (maxNegative->count > maxPositive->count) {
+    if (maxNegative->count < maxPositive->count) {
         pop(dlis->positiveLiterals);
         return maxPositive->literal;
     } else {
