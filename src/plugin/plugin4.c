@@ -10,6 +10,16 @@
 
 // --- HEAP ---
 
+void *safeMalloc(size_t size) {
+    void *p = malloc(size);
+    if (p == NULL) {
+        perror("Allocation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    return p;
+}
+
 typedef struct {
     int count;
     int literal;
@@ -46,14 +56,14 @@ int getRightChild(const int idx) {
 }
 
 MaxHeap *createMaxHeap(const int literalNum) {
-    MaxHeap *maxHeap = malloc(sizeof(MaxHeap));
+    MaxHeap *maxHeap = safeMalloc(sizeof(MaxHeap));
     maxHeap->N = literalNum;
-    maxHeap->arr = (LiteralCount *) malloc(sizeof(LiteralCount)*literalNum);
+    maxHeap->arr = (LiteralCount *) safeMalloc(sizeof(LiteralCount)*literalNum);
     for (int i=0; i<literalNum; i++) {
         maxHeap->arr[i].count = 0;
         maxHeap->arr[i].literal = i+1;
     }
-    maxHeap->indexTable = (int *) malloc(sizeof(int)*literalNum);
+    maxHeap->indexTable = (int *) safeMalloc(sizeof(int)*literalNum);
     for (int i = 0; i < literalNum; i++) {
         maxHeap->indexTable[i] = i; // Literal l, at index i=l-1, is at position i on the heap
     }
@@ -74,8 +84,12 @@ void swim(MaxHeap *h, int idx) {
 
 // NOTE: variableId is zero indexed
 void appendCount(MaxHeap *h, int variableId) {
-    if (h->arr == NULL || h->indexTable == NULL) {
+    if (h == NULL || h->arr == NULL || h->indexTable == NULL ) {
         fprintf(stderr, "[appendCount]: Heap not initialized properly\n");
+        abort();
+    }
+    if (variableId < 0 || variableId >= h->N) {
+        fprintf(stderr, "[appendCount]: Variable index out of bounds\n");
         abort();
     }
     const int idx = h->indexTable[variableId];
@@ -93,10 +107,7 @@ const LiteralCount* peek(const MaxHeap *h) {
 
 
 void freeHeap(MaxHeap *h) {
-    if (!h) {
-        fprintf(stderr, "Freeing null pointer (MaxHeap)\n");
-        abort();
-    }
+    if (!h) return;
     free(h->arr);
     free(h->indexTable);
     free(h);
@@ -112,7 +123,7 @@ typedef struct {
 } DLISCounts;
 
 DLISCounts *startDLIS(const int variableNum) {
-    DLISCounts *dlis = malloc(sizeof(DLISCounts));
+    DLISCounts *dlis = safeMalloc(sizeof(DLISCounts));
     dlis->positiveLiterals = createMaxHeap(variableNum);
     dlis->negativeLiterals = createMaxHeap(variableNum);
 
@@ -120,10 +131,7 @@ DLISCounts *startDLIS(const int variableNum) {
 }
 
 void freeDLIS(DLISCounts *dlis) {
-    if (dlis == NULL) {
-        fprintf(stderr, "Freeing null pointer (DLIS)\n");
-        abort();
-    }
+    if (!dlis) return;
     freeHeap(dlis->positiveLiterals);
     freeHeap(dlis->negativeLiterals);
     free(dlis);
@@ -149,7 +157,6 @@ enum DecideState Decide(const Form* form) {
         for(int literalIdx = 0; literalIdx<currentClause->size; ++literalIdx) {
             const LiteralId literal = currentClause->literals[literalIdx];
             const int variableId = abs(literal)-1;
-            printf("%d\n", variableId);
             if (literal > 0)
                 appendCount(counts->positiveLiterals, variableId);
             else
@@ -171,6 +178,7 @@ enum DecideState Decide(const Form* form) {
     freeDLIS(counts);
     return FOUND_VAR;
 }
+
 bool BCP(Form *formula, const Decision decision)
 {
     bool flag;
