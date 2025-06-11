@@ -5,9 +5,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "../dpll.h"
 
+#define TOP_PERCENT 0.3
 // --- HEAP ---
 
 void *safeMalloc(size_t size) {
@@ -119,6 +121,18 @@ void appendCount(MaxHeap *h, int variableId) {
     swim(h, idx);
 }
 
+const LiteralCount* peek(const MaxHeap *h) {
+    if (h == NULL || h->arr == NULL || h->indexTable == NULL) {
+        fprintf(stderr, "[peek]: Heap not initialized properly\n");
+        abort();
+    }
+    if (h->N <= 0) {
+        fprintf(stderr, "[peek]: Heap is empty\n");
+        abort();
+    }
+    return h->arr;
+}
+
 LiteralCount pop(MaxHeap *h) {
     if (h->N <= 0) {
         fprintf(stderr, "[pop]: Heap is empty\n");
@@ -144,6 +158,8 @@ void freeHeap(MaxHeap *h) {
 // -----
 
 void PreProcessing(Form* form){
+    // Código ruim
+    srand(time(NULL));
 }
 
 typedef struct {
@@ -171,10 +187,16 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
         fprintf(stderr, "Checking null pointer (DLIS)\n");
         abort();
     }
-    LiteralCount maxPositive = pop(dlis->positiveLiterals);
-    LiteralCount maxNegative = pop(dlis->negativeLiterals);
+    const LiteralCount *maxPositive = peek(dlis->positiveLiterals);
+    const LiteralCount *maxNegative = peek(dlis->negativeLiterals);
 
-    return maxNegative.count > maxPositive.count ? -maxNegative.literal : maxPositive.literal;
+    if (maxNegative->count > maxPositive->count) {
+        pop(dlis->positiveLiterals);
+        return maxPositive->literal;
+    } else {
+        pop(dlis->negativeLiterals);
+        return maxNegative->literal;
+    }
 }
 
 // NOTE: Alocar e desalocar repetidamente é rui
@@ -206,17 +228,25 @@ enum DecideState Decide(const Form* form) {
     if (allDecided) {
 
 #ifdef DEBUG
-        printf("Decision(%d/%d): all variables assigned\n");
+        printf("Decision(%d/%d): all variables assigned\n", getLevel(), form->numVars);
 #endif
         freeDLIS(counts);
         return ALL_ASSIGNED;
     }
 
-    const int mostFrequentLiteral = getMostFrequentLiteral(counts);
+    // TODO: alocar esse array préviamente dps
+    int topCount = TOP_PERCENT*form->numVars;
+    int* topMostFrequentLiterals = malloc(topCount*sizeof(int));
+    for (int i=0; i<topCount; i++) {
+        topMostFrequentLiterals[i] = getMostFrequentLiteral(counts);
+    }
+    // NOTE: rand com módulo tem viés
+    const int chosenLiteral = topMostFrequentLiterals[rand()%topCount];
+    free(topMostFrequentLiterals);
 #ifdef DEBUG
-    printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, mostFrequentLiteral);
+    printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, chosenLiteral);
 #endif
-    insertDecisionLevel(abs(mostFrequentLiteral)-1, mostFrequentLiteral > 0 ? TRUE : FALSE);
+    insertDecisionLevel(abs(chosenLiteral)-1, chosenLiteral > 0 ? TRUE : FALSE);
     freeDLIS(counts);
     return FOUND_VAR;
 }
