@@ -70,7 +70,6 @@ MaxHeap *createMaxHeap(const int literalNum) {
     return maxHeap;
 }
 
-// There is no sink function since we only count up
 void swim(MaxHeap *h, int idx) {
     if (h->arr == NULL) {
         fprintf(stderr, "[swim]: Heap not initialized properly\n");
@@ -79,6 +78,29 @@ void swim(MaxHeap *h, int idx) {
     while (idx > 0 && h->arr[idx].count > h->arr[getFather(idx)].count ) {
         swap(h, idx, getFather(idx));
         idx = getFather(idx);
+    }
+}
+
+void sink(MaxHeap *h, int idx) {
+    while (true) {
+        int leftChild = getLeftChild(idx);
+        int rightChild = getRightChild(idx);
+        int largest = idx;
+
+        if (leftChild < h->N && h->arr[leftChild].count > h->arr[largest].count) {
+            largest = leftChild;
+        }
+
+        if (rightChild < h->N && h->arr[rightChild].count > h->arr[largest].count) {
+            largest = rightChild;
+        }
+
+        if (largest == idx) {
+            break;
+        }
+
+        swap(h, idx, largest);
+        idx = largest;
     }
 }
 
@@ -97,14 +119,21 @@ void appendCount(MaxHeap *h, int variableId) {
     swim(h, idx);
 }
 
-const LiteralCount* peek(const MaxHeap *h) {
-    if (h->N > 0) {
-        return &h->arr[0];
+LiteralCount pop(MaxHeap *h) {
+    if (h->N <= 0) {
+        fprintf(stderr, "[pop]: Heap is empty\n");
+        abort();
     }
-    fprintf(stderr, "[peek]: Heap not initialized properly\n");
-    abort();
-}
 
+    LiteralCount result = h->arr[0];
+    h->N--;
+    h->arr[0] = h->arr[h->N];
+    h->indexTable[h->arr[0].literal - 1] = 0;
+    sink(h, 0);
+    h->indexTable[result.literal - 1] = -1;
+
+    return result;
+}
 
 void freeHeap(MaxHeap *h) {
     if (!h) return;
@@ -142,10 +171,10 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
         fprintf(stderr, "Checking null pointer (DLIS)\n");
         abort();
     }
-    const LiteralCount *maxPositive = peek(dlis->positiveLiterals);
-    const LiteralCount *maxNegative = peek(dlis->negativeLiterals);
+    LiteralCount maxPositive = pop(dlis->positiveLiterals);
+    LiteralCount maxNegative = pop(dlis->negativeLiterals);
 
-    return maxNegative->count > maxPositive->count ? -maxNegative->literal : maxPositive->literal;
+    return maxNegative.count > maxPositive.count ? -maxNegative.literal : maxPositive.literal;
 }
 
 // NOTE: Alocar e desalocar repetidamente é rui
