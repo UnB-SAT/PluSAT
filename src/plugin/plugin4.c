@@ -193,10 +193,9 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
     if (maxNegative->count < maxPositive->count) {
         pop(dlis->positiveLiterals);
         return maxPositive->literal;
-    } else {
-        pop(dlis->negativeLiterals);
-        return maxNegative->literal;
     }
+    pop(dlis->negativeLiterals);
+    return -maxNegative->literal;
 }
 
 // NOTE: Alocar e desalocar repetidamente é rui
@@ -234,15 +233,7 @@ enum DecideState Decide(const Form* form) {
         return ALL_ASSIGNED;
     }
 
-    // TODO: alocar esse array préviamente dps
-    int topCount = TOP_PERCENT*form->numVars;
-    int* topMostFrequentLiterals = malloc(topCount*sizeof(int));
-    for (int i=0; i<topCount; i++) {
-        topMostFrequentLiterals[i] = getMostFrequentLiteral(counts);
-    }
-    // NOTE: rand com módulo tem viés
-    const int chosenLiteral = topMostFrequentLiterals[rand()%topCount];
-    free(topMostFrequentLiterals);
+    const int chosenLiteral = getMostFrequentLiteral(counts);
 #ifdef DEBUG
     printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, chosenLiteral);
 #endif
