@@ -121,7 +121,7 @@ void appendCount(MaxHeap *h, int variableId) {
     swim(h, idx);
 }
 
-const LiteralCount* peek(const MaxHeap *h) {
+const LiteralCount peek(const MaxHeap *h) {
     if (h == NULL || h->arr == NULL || h->indexTable == NULL) {
         fprintf(stderr, "[peek]: Heap not initialized properly\n");
         abort();
@@ -130,7 +130,7 @@ const LiteralCount* peek(const MaxHeap *h) {
         fprintf(stderr, "[peek]: Heap is empty\n");
         abort();
     }
-    return h->arr;
+    return h->arr[0];
 }
 
 LiteralCount pop(MaxHeap *h) {
@@ -187,15 +187,15 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
         fprintf(stderr, "Checking null pointer (DLIS)\n");
         abort();
     }
-    const LiteralCount *maxPositive = peek(dlis->positiveLiterals);
-    const LiteralCount *maxNegative = peek(dlis->negativeLiterals);
+    const LiteralCount maxPositive = peek(dlis->positiveLiterals);
+    const LiteralCount maxNegative = peek(dlis->negativeLiterals);
 
-    if (maxNegative->count < maxPositive->count) {
+    if (maxNegative.count < maxPositive.count) {
         pop(dlis->positiveLiterals);
-        return maxPositive->literal;
+        return maxPositive.literal;
     }
     pop(dlis->negativeLiterals);
-    return -maxNegative->literal;
+    return -maxNegative.literal;
 }
 
 // NOTE: Alocar e desalocar repetidamente é rui
@@ -203,6 +203,7 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
 enum DecideState Decide(const Form* form) {
     bool allDecided = true;
     DLISCounts* counts = startDLIS(form->numVars);
+    int *isDecided = calloc(form->numVars, sizeof(int));
     for (const ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
         /* NOTE: Ter um tipo nó separado da cláusula em vez de usar uma lista encadeada
          * intrusiva é ineficiente e feio
@@ -213,10 +214,13 @@ enum DecideState Decide(const Form* form) {
             const int variableId = abs(literal)-1;
             if (getVarState(variableId) == UNK) {
                 allDecided = false;
+                isDecided[variableId] = false;
                 if (literal > 0)
                     appendCount(counts->positiveLiterals, variableId);
                 else
                     appendCount(counts->negativeLiterals, variableId);
+            } else {
+                isDecided[variableId] = true;
             }
         }
     }
@@ -225,19 +229,21 @@ enum DecideState Decide(const Form* form) {
      * para verificar se todas as variáveis já foram decididas
      */
     if (allDecided) {
-
 #ifdef DEBUG
         printf("Decision(%d/%d): all variables assigned\n", getLevel(), form->numVars);
 #endif
         freeDLIS(counts);
+        free(isDecided);
         return ALL_ASSIGNED;
     }
 
     const int chosenLiteral = getMostFrequentLiteral(counts);
+
 #ifdef DEBUG
     printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, chosenLiteral);
 #endif
     insertDecisionLevel(abs(chosenLiteral)-1, chosenLiteral > 0 ? TRUE : FALSE);
+    free(isDecided);
     freeDLIS(counts);
     return FOUND_VAR;
 }
