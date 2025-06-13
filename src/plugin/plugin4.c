@@ -308,10 +308,7 @@ enum DecideState Decide(const Form* form) {
     const int topPercent = myCeil(TOP_PERCENT* unknownCount);
 
     int *topLiterals = safeMalloc(topPercent*sizeof(int));
-    for (int i=0; i<topPercent; i++) {
-        printHeapStatus(h);
-        topLiterals[i] = pop(h).literal;
-    }
+    for (int i=0; i<topPercent; i++) topLiterals[i] = pop(h).literal;
 
     const int chosenLiteral = topLiterals[rand()%topPercent];
     free(topLiterals);
