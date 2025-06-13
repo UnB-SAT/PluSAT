@@ -9,7 +9,7 @@
 
 #include "../dpll.h"
 
-#define TOP_PERCENT 0.3
+#define TOP_PERCENT 0.2
 // --- HEAP ---
 
 void *safeMalloc(size_t size) {
@@ -57,18 +57,23 @@ int getRightChild(const int idx) {
     return idx*2+2;
 }
 
+void clearHeap(MaxHeap *h, int max) {
+    h->N = max;
+    for (int i=0; i<h->N; i++) {
+        h->arr[i].count = 0;
+        h->arr[i].literal = i+1;
+    }
+    for (int i = 0; i < h->N; i++) {
+        h->indexTable[i] = i; // Literal l, at index i=l-1, is at position i on the heap
+    }
+}
+
 MaxHeap *createMaxHeap(const int literalNum) {
     MaxHeap *maxHeap = safeMalloc(sizeof(MaxHeap));
     maxHeap->N = literalNum;
     maxHeap->arr = (LiteralCount *) safeMalloc(sizeof(LiteralCount)*literalNum);
-    for (int i=0; i<literalNum; i++) {
-        maxHeap->arr[i].count = 0;
-        maxHeap->arr[i].literal = i+1;
-    }
     maxHeap->indexTable = (int *) safeMalloc(sizeof(int)*literalNum);
-    for (int i = 0; i < literalNum; i++) {
-        maxHeap->indexTable[i] = i; // Literal l, at index i=l-1, is at position i on the heap
-    }
+    clearHeap(maxHeap, literalNum);
     return maxHeap;
 }
 
@@ -121,7 +126,7 @@ void appendCount(MaxHeap *h, int variableId) {
     swim(h, idx);
 }
 
-const LiteralCount peek(const MaxHeap *h) {
+LiteralCount peek(const MaxHeap *h) {
     if (h == NULL || h->arr == NULL || h->indexTable == NULL) {
         fprintf(stderr, "[peek]: Heap not initialized properly\n");
         abort();
@@ -198,12 +203,31 @@ int getMostFrequentLiteral(DLISCounts *dlis) {
     return -maxNegative.literal;
 }
 
-// NOTE: Alocar e desalocar repetidamente é rui
-// NOTE: segfault provavelmente significa que estamos fazendo mais decisões do que variáveis
+DLISCounts *counts;
+int *isDecided;
+void startCounts(int numVars) {
+    if (counts == NULL) {
+        counts = startDLIS(numVars);
+    } else {
+        clearHeap(counts->positiveLiterals, numVars);
+        clearHeap(counts->negativeLiterals, numVars);
+    }
+
+    if (isDecided == NULL) {
+        isDecided = (int *) safeMalloc(numVars*sizeof(int));
+    }
+}
+
+int ceil(float num) {
+    int inum = (int) num;
+    if (num == (float)inum) {
+        return inum;
+    }
+    return inum + 1;
+}
+
 enum DecideState Decide(const Form* form) {
-    bool allDecided = true;
-    DLISCounts* counts = startDLIS(form->numVars);
-    int *isDecided = calloc(form->numVars, sizeof(int));
+    startCounts(form->numVars);
     for (const ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
         /* NOTE: Ter um tipo nó separado da cláusula em vez de usar uma lista encadeada
          * intrusiva é ineficiente e feio
@@ -213,7 +237,6 @@ enum DecideState Decide(const Form* form) {
             const LiteralId literal = currentClause->literals[literalIdx];
             const int variableId = abs(literal)-1;
             if (getVarState(variableId) == UNK) {
-                allDecided = false;
                 isDecided[variableId] = false;
                 if (literal > 0)
                     appendCount(counts->positiveLiterals, variableId);
@@ -224,27 +247,18 @@ enum DecideState Decide(const Form* form) {
             }
         }
     }
-    /* NOTE: Era para ter uma lista de variáveis e suas
-     * decisões para não ter que iterar por todas as cláusulas
-     * para verificar se todas as variáveis já foram decididas
-     */
-    if (allDecided) {
-#ifdef DEBUG
-        printf("Decision(%d/%d): all variables assigned\n", getLevel(), form->numVars);
-#endif
-        freeDLIS(counts);
-        free(isDecided);
-        return ALL_ASSIGNED;
-    }
+    int unknownCount = 0;
+    for (int i=0; i<form->numVars; ++i) if (!isDecided[i]) unknownCount++;
+    if (unknownCount == 0) return ALL_ASSIGNED;
 
-    const int chosenLiteral = getMostFrequentLiteral(counts);
+    const int topPercent = ceil(TOP_PERCENT*(float) unknownCount);
 
-#ifdef DEBUG
-    printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, chosenLiteral);
-#endif
-    insertDecisionLevel(abs(chosenLiteral)-1, chosenLiteral > 0 ? TRUE : FALSE);
-    free(isDecided);
-    freeDLIS(counts);
+    int *topLiterals = safeMalloc(topPercent*sizeof(int));
+    for (int i=0; i<topPercent; i++) topLiterals[i] = getMostFrequentLiteral(counts);
+    const int chosenLiteral = topLiterals[rand()%topPercent];
+    free(topLiterals);
+
+    insertDecisionLevel(abs(chosenLiteral)-1,  chosenLiteral > 0 ? TRUE : FALSE);
     return FOUND_VAR;
 }
 
@@ -257,8 +271,6 @@ bool BCP(Form *formula, const Decision decision)
     LiteralId falseValuedLiteral = ((decision.value == FALSE) ? decision.id+1 : -decision.id -1);
 
     head = formula->literals[getPos(falseValuedLiteral)];
-
-
 
     // now if some clause have only negative
     // values than this is a conflict
