@@ -10,6 +10,7 @@
 #include "../dpll.h"
 
 #define TOP_PERCENT 0.2
+
 // --- HEAP ---
 
 void *safeMalloc(size_t size) {
@@ -29,16 +30,52 @@ typedef struct {
 
 typedef struct {
     int N;
+    int varNum;
     LiteralCount *arr;
     int *indexTable;
 } MaxHeap;
+
+// Assuming variable is zero indexed;
+int getVar(const int literal) {
+    return abs(literal)-1;
+}
+
+// The Second half of the index table is where the negative literals are stored
+int getIndex(const int varNum, const int literal) {
+    if (abs(literal) > varNum) {
+        fprintf(stderr, "Array index out of bounds\n");
+        exit(EXIT_FAILURE);
+    }
+    if (literal == 0) {
+        fprintf(stderr, "Literal cannot be 0\n");
+        exit(EXIT_FAILURE);
+    }
+    const int index = getVar(literal);
+    if (literal > 0) {
+        return index;
+    }
+    return index + varNum;
+}
+
+// Returns position of literal in the heap
+int indexTableLookup(const MaxHeap *h, const int literal) {
+    return h->indexTable[getIndex(h->varNum, literal)];
+}
+
+void setIndexTable(const MaxHeap *h, const int literal, int newIdx) {
+    h->indexTable[getIndex(h->varNum, literal)] = newIdx;
+}
+
+LiteralCount *MaxHeapGet(const MaxHeap *h, const int literal) {
+    return &h->arr[indexTableLookup(h, literal)];
+}
 
 void swap(const MaxHeap *h, const int idxA, const int idxB) {
     LiteralCount *literalA = &h->arr[idxA];
     LiteralCount *literalB = &h->arr[idxB];
 
-    h->indexTable[literalA->literal - 1] = idxB;
-    h->indexTable[literalB->literal - 1] = idxA;
+    setIndexTable(h, literalA->literal, idxB);
+    setIndexTable(h, literalB->literal, idxA);
 
     const LiteralCount temp = *literalA;
     *literalA = *literalB;
@@ -57,24 +94,31 @@ int getRightChild(const int idx) {
     return idx*2+2;
 }
 
-void clearHeap(MaxHeap *h, int max) {
-    h->N = max;
-    for (int i=0; i<h->N; i++) {
+void clearHeap(MaxHeap *h, const int varNum) {
+    h->varNum = varNum;
+    h->N = varNum*2;
+    for (int i=0; i<h->varNum; i++) {
         h->arr[i].count = 0;
-        h->arr[i].literal = i+1;
+        const int literal = i+1;
+        h->arr[i].literal = literal;
+        setIndexTable(h, literal, i);
     }
-    for (int i = 0; i < h->N; i++) {
-        h->indexTable[i] = i; // Literal l, at index i=l-1, is at position i on the heap
+    for (int i=h->varNum; i<h->N; i++) {
+        h->arr[i].count = 0;
+        const int literal = -(i - h->N/2 + 1);
+        h->arr[i].literal = literal;
+        setIndexTable(h, literal, i);
     }
 }
 
-MaxHeap *createMaxHeap(const int literalNum) {
-    MaxHeap *maxHeap = safeMalloc(sizeof(MaxHeap));
-    maxHeap->N = literalNum;
-    maxHeap->arr = (LiteralCount *) safeMalloc(sizeof(LiteralCount)*literalNum);
-    maxHeap->indexTable = (int *) safeMalloc(sizeof(int)*literalNum);
-    clearHeap(maxHeap, literalNum);
-    return maxHeap;
+MaxHeap *createMaxHeap(const int varNum) {
+    MaxHeap *h = safeMalloc(sizeof(MaxHeap));
+    h->varNum = varNum;
+    h->N = varNum*2;
+    h->arr = (LiteralCount *) safeMalloc(sizeof(LiteralCount)*h->N);
+    h->indexTable = (int *) safeMalloc(sizeof(int)*h->N);
+    clearHeap(h, varNum);
+    return h;
 }
 
 void swim(MaxHeap *h, int idx) {
@@ -112,30 +156,18 @@ void sink(MaxHeap *h, int idx) {
 }
 
 // NOTE: variableId is zero indexed
-void appendCount(MaxHeap *h, int variableId) {
+void appendCount(MaxHeap *h, int literal) {
     if (h == NULL || h->arr == NULL || h->indexTable == NULL ) {
         fprintf(stderr, "[appendCount]: Heap not initialized properly\n");
         abort();
     }
-    if (variableId < 0 || variableId >= h->N) {
-        fprintf(stderr, "[appendCount]: Variable index out of bounds\n");
+    if (abs(literal) == 0 || abs(literal) > h->N/2) {
+        fprintf(stderr, "[appendCount]: Literal out of bounds\n");
         abort();
     }
-    const int idx = h->indexTable[variableId];
+    const int idx = indexTableLookup(h, literal);
     h->arr[idx].count++;
     swim(h, idx);
-}
-
-LiteralCount peek(const MaxHeap *h) {
-    if (h == NULL || h->arr == NULL || h->indexTable == NULL) {
-        fprintf(stderr, "[peek]: Heap not initialized properly\n");
-        abort();
-    }
-    if (h->N <= 0) {
-        fprintf(stderr, "[peek]: Heap is empty\n");
-        abort();
-    }
-    return h->arr[0];
 }
 
 LiteralCount pop(MaxHeap *h) {
@@ -145,11 +177,12 @@ LiteralCount pop(MaxHeap *h) {
     }
 
     LiteralCount result = h->arr[0];
+    setIndexTable(h, result.literal, -1);
     h->N--;
+
     h->arr[0] = h->arr[h->N];
-    h->indexTable[h->arr[0].literal - 1] = 0;
+    setIndexTable(h, h->arr[0].literal, 0);
     sink(h, 0);
-    h->indexTable[result.literal - 1] = -1;
 
     return result;
 }
@@ -160,6 +193,67 @@ void freeHeap(MaxHeap *h) {
     free(h->indexTable);
     free(h);
 }
+
+// Para debug
+void printHeapStatus(const MaxHeap *h) {
+    if (h == NULL) {
+        printf("Heap is NULL\n");
+        return;
+    }
+
+    if (h->arr == NULL || h->indexTable == NULL) {
+        printf("Heap not properly initialized\n");
+        return;
+    }
+
+    printf("=== Heap Status ===\n");
+    printf("Variables: %d, Total size: %d, Current elements: %d\n",
+           h->varNum, h->varNum * 2, h->N);
+
+    if (h->N == 0) {
+        printf("Heap is empty\n");
+        printf("==================\n");
+        return;
+    }
+
+    printf("\nHeap elements (in heap order):\n");
+    printf("Index | Literal | Count\n");
+    printf("------|---------|------\n");
+    for (int i = 0; i < h->N; i++) {
+        printf("%5d | %7d | %5d", i, h->arr[i].literal, h->arr[i].count);
+        if (i == 0) printf(" <- ROOT");
+        printf("\n");
+    }
+
+    printf("\nIndex table mapping:\n");
+    printf("Literal | Heap Index\n");
+    printf("--------|----------\n");
+
+    for (int var = 1; var <= h->varNum; var++) {
+        const int heapIdx = h->indexTable[getIndex(h->varNum, var)];
+        printf("%7d | %10d", var, heapIdx);
+        if (heapIdx >= 0 && heapIdx < h->N) {
+            printf(" (count: %d)", h->arr[heapIdx].count);
+        } else if (heapIdx == -1) {
+            printf(" (removed)");
+        }
+        printf("\n");
+    }
+
+    for (int var = 1; var <= h->varNum; var++) {
+        int heapIdx = h->indexTable[getIndex(h->varNum, -var)];
+        printf("%7d | %10d", -var, heapIdx);
+        if (heapIdx >= 0 && heapIdx < h->N) {
+            printf(" (count: %d)", h->arr[heapIdx].count);
+        } else if (heapIdx == -1) {
+            printf(" (removed)");
+        }
+        printf("\n");
+    }
+
+    printf("==================\n");
+}
+
 // -----
 
 void PreProcessing(Form* form){
@@ -167,50 +261,13 @@ void PreProcessing(Form* form){
     srand(time(NULL));
 }
 
-typedef struct {
-    MaxHeap *positiveLiterals;
-    MaxHeap *negativeLiterals;
-} DLISCounts;
-
-DLISCounts *startDLIS(const int variableNum) {
-    DLISCounts *dlis = safeMalloc(sizeof(DLISCounts));
-    dlis->positiveLiterals = createMaxHeap(variableNum);
-    dlis->negativeLiterals = createMaxHeap(variableNum);
-
-    return dlis;
-}
-
-void freeDLIS(DLISCounts *dlis) {
-    if (!dlis) return;
-    freeHeap(dlis->positiveLiterals);
-    freeHeap(dlis->negativeLiterals);
-    free(dlis);
-}
-
-int getMostFrequentLiteral(DLISCounts *dlis) {
-    if (dlis->positiveLiterals == NULL || dlis->negativeLiterals == NULL) {
-        fprintf(stderr, "Checking null pointer (DLIS)\n");
-        abort();
-    }
-    const LiteralCount maxPositive = peek(dlis->positiveLiterals);
-    const LiteralCount maxNegative = peek(dlis->negativeLiterals);
-
-    if (maxNegative.count < maxPositive.count) {
-        pop(dlis->positiveLiterals);
-        return maxPositive.literal;
-    }
-    pop(dlis->negativeLiterals);
-    return -maxNegative.literal;
-}
-
-DLISCounts *counts;
+MaxHeap *h;
 int *isDecided;
-void startCounts(int numVars) {
-    if (counts == NULL) {
-        counts = startDLIS(numVars);
+void startCounts(const int numVars) {
+    if (h == NULL) {
+        h = createMaxHeap(numVars);
     } else {
-        clearHeap(counts->positiveLiterals, numVars);
-        clearHeap(counts->negativeLiterals, numVars);
+        clearHeap(h, numVars);
     }
 
     if (isDecided == NULL) {
@@ -218,7 +275,7 @@ void startCounts(int numVars) {
     }
 }
 
-int ceil(float num) {
+int myCeil(const float num) {
     int inum = (int) num;
     if (num == (float)inum) {
         return inum;
@@ -235,13 +292,10 @@ enum DecideState Decide(const Form* form) {
         const Clause *currentClause = currentNode->clause;
         for(int literalIdx = 0; literalIdx<currentClause->size; ++literalIdx) {
             const LiteralId literal = currentClause->literals[literalIdx];
-            const int variableId = abs(literal)-1;
+            const int variableId = getVar(literal);
             if (getVarState(variableId) == UNK) {
                 isDecided[variableId] = false;
-                if (literal > 0)
-                    appendCount(counts->positiveLiterals, variableId);
-                else
-                    appendCount(counts->negativeLiterals, variableId);
+                appendCount(h, literal);
             } else {
                 isDecided[variableId] = true;
             }
@@ -251,10 +305,14 @@ enum DecideState Decide(const Form* form) {
     for (int i=0; i<form->numVars; ++i) if (!isDecided[i]) unknownCount++;
     if (unknownCount == 0) return ALL_ASSIGNED;
 
-    const int topPercent = ceil(TOP_PERCENT*(float) unknownCount);
+    const int topPercent = myCeil(TOP_PERCENT* unknownCount);
 
     int *topLiterals = safeMalloc(topPercent*sizeof(int));
-    for (int i=0; i<topPercent; i++) topLiterals[i] = getMostFrequentLiteral(counts);
+    for (int i=0; i<topPercent; i++) {
+        printHeapStatus(h);
+        topLiterals[i] = pop(h).literal;
+    }
+
     const int chosenLiteral = topLiterals[rand()%topPercent];
     free(topLiterals);
 
