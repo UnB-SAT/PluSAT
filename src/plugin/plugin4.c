@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../dpll.h"
-
 #define TOP_PERCENT 0.2
 
 // --- HEAP ---
@@ -43,11 +41,11 @@ int getVar(const int literal) {
 // The Second half of the index table is where the negative literals are stored
 int getIndex(const int varNum, const int literal) {
     if (abs(literal) > varNum) {
-        fprintf(stderr, "Array index out of bounds\n");
+        fprintf(stderr, "[getIndex] Array index out of bounds\n");
         exit(EXIT_FAILURE);
     }
     if (literal == 0) {
-        fprintf(stderr, "Literal cannot be 0\n");
+        fprintf(stderr, "[getIndex] Literal cannot be 0\n");
         exit(EXIT_FAILURE);
     }
     const int index = getVar(literal);
@@ -122,7 +120,7 @@ MaxHeap *createMaxHeap(const int varNum) {
 }
 
 void swim(MaxHeap *h, int idx) {
-    if (h->arr == NULL) {
+    if (h == NULL || h->arr == NULL || h->indexTable == NULL ) {
         fprintf(stderr, "[swim]: Heap not initialized properly\n");
         abort();
     }
@@ -133,6 +131,10 @@ void swim(MaxHeap *h, int idx) {
 }
 
 void sink(MaxHeap *h, int idx) {
+    if (h == NULL || h->arr == NULL || h->indexTable == NULL ) {
+        fprintf(stderr, "[sink]: Heap not initialized properly\n");
+        abort();
+    }
     while (true) {
         int leftChild = getLeftChild(idx);
         int rightChild = getRightChild(idx);
