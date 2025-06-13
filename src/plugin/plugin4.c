@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "../dpll.h"
+
 #define TOP_PERCENT 0.2
 
 // --- HEAP ---
@@ -275,17 +277,27 @@ void PreProcessing(Form* form){
     srand(time(NULL));
 }
 
-MaxHeap *h;
-int *isDecided;
-void startCounts(const int numVars) {
-    if (h == NULL) {
-        h = createMaxHeap(numVars);
+MaxHeap *heap;
+LiteralCount *topLiterals;
+void startCounts(const Form *form) {
+    if (heap == NULL) {
+        heap = createMaxHeap(form->numVars);
+        for (const ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
+            /* NOTE: Ter um tipo nó separado da cláusula em vez de usar uma lista encadeada
+             * intrusiva é ineficiente e feio
+             */
+            const Clause *currentClause = currentNode->clause;
+            for(int literalIdx = 0; literalIdx<currentClause->size; ++literalIdx) {
+                const LiteralId literal = currentClause->literals[literalIdx];
+                appendCount(heap, literal);
+            }
+        }
     } else {
-        clearHeap(h, numVars);
+        clearHeap(heap, form->numVars);
     }
 
-    if (isDecided == NULL) {
-        isDecided = (int *) safeMalloc(numVars*sizeof(int));
+    if (topLiterals == NULL) {
+        topLiterals = malloc(form->numVars * sizeof(int));
     }
 }
 
@@ -298,35 +310,26 @@ int myCeil(const float num) {
 }
 
 enum DecideState Decide(const Form* form) {
-    startCounts(form->numVars);
-    for (const ClauseNode* currentNode = form->clauses; currentNode != NULL; currentNode = currentNode->next) {
-        /* NOTE: Ter um tipo nó separado da cláusula em vez de usar uma lista encadeada
-         * intrusiva é ineficiente e feio
-         */
-        const Clause *currentClause = currentNode->clause;
-        for(int literalIdx = 0; literalIdx<currentClause->size; ++literalIdx) {
-            const LiteralId literal = currentClause->literals[literalIdx];
-            const int variableId = getVar(literal);
-            if (getVarState(variableId) == UNK) {
-                isDecided[variableId] = false;
-                appendCount(h, literal);
-            } else {
-                isDecided[variableId] = true;
-            }
-        }
-    }
-    int unknownCount = 0;
-    for (int i=0; i<form->numVars; ++i) if (!isDecided[i]) unknownCount++;
-    if (unknownCount == 0) return ALL_ASSIGNED;
+    startCounts(form);
 
+    const int unknownCount = form->numVars - getLevel();
     const int topPercent = myCeil(TOP_PERCENT* unknownCount);
 
-    int *topLiterals = safeMalloc(topPercent*sizeof(int));
-    for (int i=0; i<topPercent; i++) topLiterals[i] = pop(h).literal;
+    int insertedCount = 0;
+    int i = 0;
+    while (insertedCount < topPercent) {
+        if (i >= heap->capacity) {
+            fprintf(stderr, "[Decide]: Index out of bounds\n");
+            abort();
+        }
+        LiteralCount l = heap->arr[i++];
+        if (getVarState(abs(l.literal)-1) == UNK) continue;
+        topLiterals[insertedCount++] = l.literal;
+    }
 
     const int chosenLiteral = topLiterals[rand()%topPercent];
-    free(topLiterals);
 
+    printf("Decision(%d/%d): %d\n", getLevel(), form->numVars, chosenLiteral);
     insertDecisionLevel(abs(chosenLiteral)-1,  chosenLiteral > 0 ? TRUE : FALSE);
     return FOUND_VAR;
 }
