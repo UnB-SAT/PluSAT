@@ -16,6 +16,10 @@ clean:
 plugin: makebuilddir
 	$(CC) $(CFLAGS) -shared -o build/libimplement.so src/plugin/simple.c $(INCLUDES)
 
-run: build
+sat: build
+	./build/main.o ./uf20-91/uf20-0999.cnf
 	#./build/main.o ~/Downloads/cnf/cnf50-218/uuf50-063.cnf
-	./build/main.o ~/Downloads/cnf/uf20-91/uf20-0999.cnf
+
+unsat: build
+	./build/main.o ./uuf50-218/uuf50-0999.cnf
+	# ./build/main.o ~/Downloads/cnf/uf20-91/uf20-0999.cnf
