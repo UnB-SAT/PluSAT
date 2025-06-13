@@ -7,7 +7,7 @@ SRCDIR = src
 
 # Source files
 MAIN_SRCS = $(SRCDIR)/main.c $(SRCDIR)/parser.c $(SRCDIR)/dpll.c $(SRCDIR)/formula.c $(SRCDIR)/discovery.c
-PLUGIN_SRCS = $(SRCDIR)/plugin/simple.c
+PLUGIN_SRCS = $(SRCDIR)/plugin/plugin4.c
 
 # Targets
 MAIN_TARGET = $(BUILDDIR)/main.o
