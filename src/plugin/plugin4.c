@@ -27,8 +27,9 @@ typedef struct {
 } LiteralCount;
 
 typedef struct {
-    int N;
+    int length;
     int varNum;
+    int capacity;
     LiteralCount *arr;
     int *indexTable;
 } MaxHeap;
@@ -93,17 +94,16 @@ int getRightChild(const int idx) {
 }
 
 void clearHeap(MaxHeap *h, const int varNum) {
-    h->varNum = varNum;
-    h->N = varNum*2;
+    h->length = h->capacity;
     for (int i=0; i<h->varNum; i++) {
         h->arr[i].count = 0;
         const int literal = i+1;
         h->arr[i].literal = literal;
         setIndexTable(h, literal, i);
     }
-    for (int i=h->varNum; i<h->N; i++) {
+    for (int i=h->varNum; i<h->length; i++) {
         h->arr[i].count = 0;
-        const int literal = -(i - h->N/2 + 1);
+        const int literal = -(i - h->length/2 + 1);
         h->arr[i].literal = literal;
         setIndexTable(h, literal, i);
     }
@@ -112,9 +112,10 @@ void clearHeap(MaxHeap *h, const int varNum) {
 MaxHeap *createMaxHeap(const int varNum) {
     MaxHeap *h = safeMalloc(sizeof(MaxHeap));
     h->varNum = varNum;
-    h->N = varNum*2;
-    h->arr = (LiteralCount *) safeMalloc(sizeof(LiteralCount)*h->N);
-    h->indexTable = (int *) safeMalloc(sizeof(int)*h->N);
+    h->length = varNum*2;
+    h->capacity = h->length;
+    h->arr = (LiteralCount *) safeMalloc(sizeof(LiteralCount)*h->capacity);
+    h->indexTable = (int *) safeMalloc(sizeof(int)*h->capacity);
     clearHeap(h, varNum);
     return h;
 }
@@ -140,11 +141,11 @@ void sink(MaxHeap *h, int idx) {
         int rightChild = getRightChild(idx);
         int largest = idx;
 
-        if (leftChild < h->N && h->arr[leftChild].count > h->arr[largest].count) {
+        if (leftChild < h->length && h->arr[leftChild].count > h->arr[largest].count) {
             largest = leftChild;
         }
 
-        if (rightChild < h->N && h->arr[rightChild].count > h->arr[largest].count) {
+        if (rightChild < h->length && h->arr[rightChild].count > h->arr[largest].count) {
             largest = rightChild;
         }
 
@@ -163,7 +164,7 @@ void appendCount(MaxHeap *h, int literal) {
         fprintf(stderr, "[appendCount]: Heap not initialized properly\n");
         abort();
     }
-    if (abs(literal) == 0 || abs(literal) > h->N/2) {
+    if (abs(literal) == 0 || abs(literal) > h->length/2) {
         fprintf(stderr, "[appendCount]: Literal out of bounds\n");
         abort();
     }
@@ -172,17 +173,28 @@ void appendCount(MaxHeap *h, int literal) {
     swim(h, idx);
 }
 
+void push(MaxHeap *h, LiteralCount c) {
+    if (h->length >= h->capacity) {
+        fprintf(stderr, "[push] Full heap\n");
+        abort();
+    }
+    h->arr[h->length] = c;
+    setIndexTable(h, c.literal, h->length);
+    swim(h, h->length);
+    h->length++;
+}
+
 LiteralCount pop(MaxHeap *h) {
-    if (h->N <= 0) {
+    if (h->length <= 0) {
         fprintf(stderr, "[pop]: Heap is empty\n");
         abort();
     }
 
     LiteralCount result = h->arr[0];
     setIndexTable(h, result.literal, -1);
-    h->N--;
+    h->length--;
 
-    h->arr[0] = h->arr[h->N];
+    h->arr[0] = h->arr[h->length];
     setIndexTable(h, h->arr[0].literal, 0);
     sink(h, 0);
 
@@ -210,9 +222,9 @@ void printHeapStatus(const MaxHeap *h) {
 
     printf("=== Heap Status ===\n");
     printf("Variables: %d, Total size: %d, Current elements: %d\n",
-           h->varNum, h->varNum * 2, h->N);
+           h->varNum, h->varNum * 2, h->length);
 
-    if (h->N == 0) {
+    if (h->length == 0) {
         printf("Heap is empty\n");
         printf("==================\n");
         return;
@@ -221,7 +233,7 @@ void printHeapStatus(const MaxHeap *h) {
     printf("\nHeap elements (in heap order):\n");
     printf("Index | Literal | Count\n");
     printf("------|---------|------\n");
-    for (int i = 0; i < h->N; i++) {
+    for (int i = 0; i < h->length; i++) {
         printf("%5d | %7d | %5d", i, h->arr[i].literal, h->arr[i].count);
         if (i == 0) printf(" <- ROOT");
         printf("\n");
@@ -234,7 +246,7 @@ void printHeapStatus(const MaxHeap *h) {
     for (int var = 1; var <= h->varNum; var++) {
         const int heapIdx = h->indexTable[getIndex(h->varNum, var)];
         printf("%7d | %10d", var, heapIdx);
-        if (heapIdx >= 0 && heapIdx < h->N) {
+        if (heapIdx >= 0 && heapIdx < h->length) {
             printf(" (count: %d)", h->arr[heapIdx].count);
         } else if (heapIdx == -1) {
             printf(" (removed)");
@@ -245,7 +257,7 @@ void printHeapStatus(const MaxHeap *h) {
     for (int var = 1; var <= h->varNum; var++) {
         int heapIdx = h->indexTable[getIndex(h->varNum, -var)];
         printf("%7d | %10d", -var, heapIdx);
-        if (heapIdx >= 0 && heapIdx < h->N) {
+        if (heapIdx >= 0 && heapIdx < h->length) {
             printf(" (count: %d)", h->arr[heapIdx].count);
         } else if (heapIdx == -1) {
             printf(" (removed)");
