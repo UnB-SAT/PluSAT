@@ -106,6 +106,8 @@ bool find_and_move(TwoWatchedLiterals **list, TwoWatchedClause *tw_clause, int f
 
 void PreProcessing(Form *form)
 {
+    // JEROSLAW
+
     int num_vars = form->numVars;
     scores = (double *) calloc((num_vars * 2), sizeof(double));
     sorted_vars = (VarScore *) calloc(num_vars, sizeof(VarScore));
@@ -133,6 +135,26 @@ void PreProcessing(Form *form)
         }
         list = list->next;
     }
+
+    for (int i = 0; i < num_vars; ++i)
+    {
+        double pos_score = scores[i];
+        double neg_score = scores[i + num_vars];
+
+        sorted_vars[i].var_index = i;
+        if (pos_score >= neg_score)
+        {
+            sorted_vars[i].score = pos_score;
+            sorted_vars[i].best_value = TRUE;
+        }
+        else
+        {
+            sorted_vars[i].score = neg_score;
+            sorted_vars[i].best_value = FALSE;
+        }
+    }
+
+    qsort(sorted_vars, form->numVars, sizeof(VarScore), compareVarScore);
 
     // TWO WATCHED LITERALS
 
@@ -166,25 +188,6 @@ void PreProcessing(Form *form)
             twl[getPos(l1)] = push(twl[getPos(l1)], &twc[i]);
         }
     }
-    for (int i = 0; i < num_vars; ++i)
-    {
-        double pos_score = scores[i];
-        double neg_score = scores[i + num_vars];
-
-        sorted_vars[i].var_index = i;
-        if (pos_score >= neg_score)
-        {
-            sorted_vars[i].score = pos_score;
-            sorted_vars[i].best_value = TRUE;
-        }
-        else
-        {
-            sorted_vars[i].score = neg_score;
-            sorted_vars[i].best_value = FALSE;
-        }
-    }
-
-    qsort(sorted_vars, form->numVars, sizeof(VarScore), compareVarScore);
 }
 
 enum DecideState Decide(const Form *form)
@@ -211,18 +214,16 @@ bool BCP(Form *formula, const Decision decision)
     LiteralId *queue = (LiteralId*) malloc(sizeof(LiteralId) * numVars);
     int head = 0, tail = 0;
 
-    // Determina o literal que foi falseficado pela decisão atual
     LiteralId falseValuedLiteral = ((decision.value == FALSE) ? (decision.id + 1) : -decision.id - 1);
     queue[tail++] = falseValuedLiteral;
 
-    // Processa todas as implicações até esvaziar a fila
     while (head < tail)
     {
         LiteralId lit = queue[head++];
         int pos = getPos(lit);
         TwoWatchedLiterals *node = twl[pos];
 
-        // Percorre cada cláusula assistida pelo literal falseficado
+        // Percorre cada cláusula assistida pelo literal falsificado
         while (node != NULL)
         {
             TwoWatchedLiterals *nextNode = node->next;
@@ -238,12 +239,10 @@ bool BCP(Form *formula, const Decision decision)
             else if (clause->literals[watch1] == lit) falseIndex = watch1;
             else
             {
-                // Se a cláusula não está assistida por 'lit', ignora-a
                 node = nextNode;
                 continue;
             }
 
-            // Identifica o outro literal assistido na cláusula
             int otherIndex = (falseIndex == watch0) ? watch1 : watch0;
             LiteralId otherLit = clause->literals[otherIndex];
 
@@ -257,7 +256,6 @@ bool BCP(Form *formula, const Decision decision)
             // Tenta encontrar um novo literal não-FALSE para assistir na cláusula
             if (find_and_move(twl, tw_clause, falseIndex, pos))
             {
-                // Se conseguiu mover o watch para outro literal, passa para a próxima cláusula
                 node = nextNode;
                 continue;
             }
@@ -267,42 +265,24 @@ bool BCP(Form *formula, const Decision decision)
             {
                 // Implicação: define otherLit para satisfazer a cláusula
                 VariableId var = abs(otherLit) - 1;
-                Decision *decisions = getDecisions();
-                int currentLevel = getLevel();
-                bool already = false;
-                // Verifica se a variável já foi registrada no histórico de decisões
-                for (int i = 0; i < currentLevel; ++i)
-                {
-                    if (decisions[i].id == var)
-                    {
-                        already = true;
-                        break;
-                    }
-                }
-                // Se ainda não foi registrada, adiciona como decisão de propagação
-                if (!already)
-                {
-                    insertDecisionLevel(var, (otherLit > 0));
-                    setVarState(var, (otherLit > 0) ? TRUE : FALSE);
-                    // Adiciona o literal correspondente false-valued à fila de propagação
-                    queue[tail++] = -otherLit;
-                }
-                // Continua com a próxima cláusula assistida por 'lit'
+                insertDecisionLevel(var, (otherLit > 0));
+                setVarState(var, (otherLit > 0) ? TRUE : FALSE);
+
+                // Adiciona o literal correspondente false-valued à fila de propagação
+                queue[tail++] = -otherLit;
                 node = nextNode;
                 continue;
             }
 
-            // Se o outro literal for FALSE, ocorre conflito real (cláusula sem literais possíveis)
+            // Se o outro literal for FALSE, ocorre conflito
             free(queue);
             return false;
         }
     }
 
-    // Todas as implicações foram propagadas sem conflito
     free(queue);
     return true;
 }
-
 
 int resolveConflict()
 {
