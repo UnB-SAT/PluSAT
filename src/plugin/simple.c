@@ -4,7 +4,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct VarScore {
+    int var_index;
+    double score;
+    bool best_value;
+} VarScore;
+
 double *scores = NULL;
+VarScore *sorted_vars = NULL;
+
+int compareVarScore(const void *a, const void *b)
+{
+    const VarScore *va = (const VarScore *)a;
+    const VarScore *vb = (const VarScore *)b;
+
+    if (va->score < vb->score)
+        return 1;
+    else if (va->score > vb->score)
+        return -1;
+    else
+        return 0;
+}
 
 typedef struct TwoWatchedClause 
 {
@@ -86,9 +106,9 @@ bool find_and_move(TwoWatchedLiterals **list, TwoWatchedClause *tw_clause, int f
 
 void PreProcessing(Form *form)
 {
-    // JEROSLAW
-
-    scores = (double *) calloc((form->numVars * 2), sizeof(double));
+    int num_vars = form->numVars;
+    scores = (double *) calloc((num_vars * 2), sizeof(double));
+    sorted_vars = (VarScore *) calloc(num_vars, sizeof(VarScore));
 
     ClauseNode *list = form->clauses;
     while (list != NULL)
@@ -108,7 +128,7 @@ void PreProcessing(Form *form)
             }
             else
             {
-                scores[var_index + form->numVars] += score;
+                scores[var_index + num_vars] += score;
             }
         }
         list = list->next;
@@ -146,42 +166,39 @@ void PreProcessing(Form *form)
             twl[getPos(l1)] = push(twl[getPos(l1)], &twc[i]);
         }
     }
+    for (int i = 0; i < num_vars; ++i)
+    {
+        double pos_score = scores[i];
+        double neg_score = scores[i + num_vars];
+
+        sorted_vars[i].var_index = i;
+        if (pos_score >= neg_score)
+        {
+            sorted_vars[i].score = pos_score;
+            sorted_vars[i].best_value = TRUE;
+        }
+        else
+        {
+            sorted_vars[i].score = neg_score;
+            sorted_vars[i].best_value = FALSE;
+        }
+    }
+
+    qsort(sorted_vars, form->numVars, sizeof(VarScore), compareVarScore);
 }
 
 enum DecideState Decide(const Form *form)
 {
-
-    double max_score = -1.0;
-    int best_var = -1;
-    bool best_value = FALSE;
     int num_vars = form->numVars;
 
     for (int i = 0; i < num_vars; ++i)
     {
-        if (getVarState(i) != UNK)
-            continue;
-
-        double pos_score = scores[i];
-        double neg_score = scores[i + num_vars];
-
-        if (pos_score > max_score)
+        int var = sorted_vars[i].var_index;
+        if (getVarState(var) == UNK)
         {
-            max_score = pos_score;
-            best_var = i;
-            best_value = TRUE;
+            insertDecisionLevel(var, sorted_vars[i].best_value);
+            return FOUND_VAR;
         }
-        if (neg_score > max_score)
-        {
-            max_score = neg_score;
-            best_var = i;
-            best_value = FALSE;
-        }
-    }
-
-    if (best_var != -1)
-    {
-        insertDecisionLevel(best_var, best_value);
-        return FOUND_VAR;
     }
 
     return ALL_ASSIGNED;
