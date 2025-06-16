@@ -189,67 +189,103 @@ enum DecideState Decide(const Form *form)
 
 bool BCP(Form *formula, const Decision decision)
 {
-    LiteralId falseValuedLiteral = ((decision.value == FALSE) ? decision.id + 1 : -decision.id - 1);
-    int pos = getPos(falseValuedLiteral);
+    // Fila para literais false-valued a serem propagados
+    int numVars = formula->numVars;
+    LiteralId *queue = (LiteralId*) malloc(sizeof(LiteralId) * numVars);
+    int head = 0, tail = 0;
 
-    TwoWatchedLiterals *list = twl[pos];
+    // Determina o literal que foi falseficado pela decisão atual
+    LiteralId falseValuedLiteral = ((decision.value == FALSE) ? (decision.id + 1) : -decision.id - 1);
+    queue[tail++] = falseValuedLiteral;
 
-    while (list != NULL)
+    // Processa todas as implicações até esvaziar a fila
+    while (head < tail)
     {
-        TwoWatchedClause *tw_clause = list->c;
-        Clause *clause = tw_clause->c;
+        LiteralId lit = queue[head++];
+        int pos = getPos(lit);
+        TwoWatchedLiterals *node = twl[pos];
 
-        int watch0 = tw_clause->ids[0];
-        int watch1 = tw_clause->ids[1];
-
-        // verifica qual dos literais se tornou falso
-        int falseIndex = -1;
-
-        if (clause->literals[watch0] == falseValuedLiteral) falseIndex = watch0;
-        else if (clause->literals[watch1] == falseValuedLiteral) falseIndex = watch1;
-        else 
+        // Percorre cada cláusula assistida pelo literal falseficado
+        while (node != NULL)
         {
-            list = list->next;
-            continue;
-        }
+            TwoWatchedLiterals *nextNode = node->next;
+            TwoWatchedClause *tw_clause = node->c;
+            Clause *clause = tw_clause->c;
 
-        int otherIndex = (falseIndex == watch0) ? watch1 : watch0;
-        LiteralId otherLit = clause->literals[otherIndex];
+            int watch0 = tw_clause->ids[0];
+            int watch1 = tw_clause->ids[1];
+            int falseIndex = -1;
 
-        // Se o outro literal está TRUE, a cláusula está satisfeita
-        // talvez seja mais correto verificar se é diferente de FALSE
-        if (getLitState(otherLit) == TRUE) 
-        {
-            list = list->next;
-            continue;
-        }
+            // Descobre qual dos literais assistidos se tornou falso
+            if (clause->literals[watch0] == lit) falseIndex = watch0;
+            else if (clause->literals[watch1] == lit) falseIndex = watch1;
+            else
+            {
+                // Se a cláusula não está assistida por 'lit', ignora-a
+                node = nextNode;
+                continue;
+            }
 
-        // encontrar um novo literal
-        if (find_and_move(twl, tw_clause, falseIndex, pos))
-        {
-            list = list->next;
-            continue;
-        }
-        
-        // Nenhum outro literal pôde ser assistido
-        if (getLitState(otherLit) == UNK)
-        {
-            // bool value = (otherLit > 0);
-            // propagar
-            // insertDecisionLevel(abs(otherLit) -1, (otherLit > 0));
-            // setVarState(abs(otherLit) - 1, otherLit > 0 ? TRUE : FALSE);
-            // return false;
-        } else
-        {
-            // Conflito: os dois literais são FALSE
+            // Identifica o outro literal assistido na cláusula
+            int otherIndex = (falseIndex == watch0) ? watch1 : watch0;
+            LiteralId otherLit = clause->literals[otherIndex];
+
+            // Se o outro literal já é TRUE, a cláusula já está satisfeita
+            if (getLitState(otherLit) == TRUE)
+            {
+                node = nextNode;
+                continue;
+            }
+
+            // Tenta encontrar um novo literal não-FALSE para assistir na cláusula
+            if (find_and_move(twl, tw_clause, falseIndex, pos))
+            {
+                // Se conseguiu mover o watch para outro literal, passa para a próxima cláusula
+                node = nextNode;
+                continue;
+            }
+
+            // Se não há novo literal para assistir, a cláusula ficou com apenas um literal relevante (otherLit)
+            if (getLitState(otherLit) == UNK)
+            {
+                // Implicação: define otherLit para satisfazer a cláusula
+                VariableId var = abs(otherLit) - 1;
+                Decision *decisions = getDecisions();
+                int currentLevel = getLevel();
+                bool already = false;
+                // Verifica se a variável já foi registrada no histórico de decisões
+                for (int i = 0; i < currentLevel; ++i)
+                {
+                    if (decisions[i].id == var)
+                    {
+                        already = true;
+                        break;
+                    }
+                }
+                // Se ainda não foi registrada, adiciona como decisão de propagação
+                if (!already)
+                {
+                    insertDecisionLevel(var, (otherLit > 0));
+                    setVarState(var, (otherLit > 0) ? TRUE : FALSE);
+                    // Adiciona o literal correspondente false-valued à fila de propagação
+                    queue[tail++] = -otherLit;
+                }
+                // Continua com a próxima cláusula assistida por 'lit'
+                node = nextNode;
+                continue;
+            }
+
+            // Se o outro literal for FALSE, ocorre conflito real (cláusula sem literais possíveis)
+            free(queue);
             return false;
         }
-
-        list = list->next;
     }
 
+    // Todas as implicações foram propagadas sem conflito
+    free(queue);
     return true;
 }
+
 
 int resolveConflict()
 {
