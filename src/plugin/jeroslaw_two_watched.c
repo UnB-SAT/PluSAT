@@ -1,6 +1,6 @@
 /**
- * Plugin: Jeroslaw e Two-Watched Literals
- * Implementação da heurística de Jeroslaw-Wang e da estrutura de Two-Watched Literals
+ * Plugin: Jeroslow e Two-Watched Literals
+ * Implementação da heurística de Jeroslow-Wang e da estrutura de Two-Watched Literals
  * 
  * Autores: Guilherme Westphall e Lucas Martins Gabriel
  * 22 de Junho de 2025
@@ -118,7 +118,7 @@ bool find_and_swap(TwoWatchedLiterals **list, TwoWatchedClause *tw_clause, int f
 
 void PreProcessing(Form *form)
 {
-    // JEROSLAW
+    // JEROSLOW
 
     int num_vars = form->numVars;
     scores = (double *)calloc((num_vars * 2), sizeof(double));
