@@ -1,10 +1,19 @@
+/**
+ * Plugin: Jeroslaw e Two-Watched Literals
+ * Implementação da heurística de Jeroslaw-Wang e da estrutura de Two-Watched Literals
+ *
+ * Autores: Guilherme Westphall e Lucas Martins Gabriel
+ * 22 de Junho de 2025
+ */
+
 #include "dpll.h"
 #include "formula.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct VarScore {
+typedef struct VarScore
+{
+    double max_score;
     int var_index;
     double score;
     bool best_value;
@@ -26,13 +35,13 @@ int compareVarScore(const void *a, const void *b)
         return 0;
 }
 
-typedef struct TwoWatchedClause 
+typedef struct TwoWatchedClause
 {
     int ids[2];
     Clause *c;
 } TwoWatchedClause;
 
-typedef struct TwoWatchedLiterals 
+typedef struct TwoWatchedLiterals
 {
     TwoWatchedClause *c;
     struct TwoWatchedLiterals *next;
@@ -40,18 +49,20 @@ typedef struct TwoWatchedLiterals
 
 TwoWatchedLiterals **twl = NULL;
 TwoWatchedClause *twc = NULL;
+LiteralId *queue = NULL;
 
-TwoWatchedLiterals* push(TwoWatchedLiterals *list, TwoWatchedClause *c)
+TwoWatchedLiterals *push(TwoWatchedLiterals *list, TwoWatchedClause *c)
 {
-    TwoWatchedLiterals *new = (TwoWatchedLiterals *) malloc(sizeof(TwoWatchedLiterals));
+    TwoWatchedLiterals *new = (TwoWatchedLiterals *)malloc(sizeof(TwoWatchedLiterals));
     new->c = c;
     new->next = list;
     return new;
 }
 
-TwoWatchedLiterals* del(TwoWatchedLiterals *head, TwoWatchedClause *target)
+TwoWatchedLiterals *del(TwoWatchedLiterals *head, TwoWatchedClause *target)
 {
-    if (head == NULL) return NULL;
+    if (head == NULL)
+        return NULL;
 
     if (head->c == target)
     {
@@ -78,39 +89,40 @@ TwoWatchedLiterals* del(TwoWatchedLiterals *head, TwoWatchedClause *target)
     return head;
 }
 
-bool find_and_move(TwoWatchedLiterals **list, TwoWatchedClause *tw_clause, int falseIndex, int pos)
+bool find_and_swap(TwoWatchedLiterals **list, TwoWatchedClause *tw_clause, int falseIndex, int pos)
 {
     Clause *clause = tw_clause->c;
-    for (int i=0; i < clause->size; i++)
+    for (int i = 0; i < clause->size; i++)
+    {
+        if (i == tw_clause->ids[0] || i == tw_clause->ids[1])
+            continue;
+
+        LiteralId candidate = clause->literals[i];
+
+        if (getLitState(candidate) != FALSE)
         {
-            if (i == tw_clause->ids[0] || i == tw_clause->ids[1]) continue;
+            // troca pelo literal falsificado
+            tw_clause->ids[(falseIndex == tw_clause->ids[0]) ? 0 : 1] = i;
 
-            LiteralId candidate = clause->literals[i];
+            // Move a cláusula da lista do literal antigo para o novo
+            list[pos] = del(list[pos], tw_clause);
 
-            if (getLitState(candidate) != FALSE)
-            {
-                // troca pelo literal falsificado
-                tw_clause->ids[(falseIndex == tw_clause->ids[0])? 0 : 1] = i;
+            int newPos = getPos(candidate);
+            list[newPos] = push(list[newPos], tw_clause);
 
-                // Move a cláusula da lista do literal antigo para o novo
-                list[pos] = del(list[pos], tw_clause);
-
-                int newPos = getPos(candidate);
-                list[newPos] = push(list[newPos], tw_clause);
-
-                return true;
-            }
+            return true;
         }
-        return false;
+    }
+    return false;
 }
 
 void PreProcessing(Form *form)
 {
-    // JEROSLOW
+    // JEROSLAW
 
     int num_vars = form->numVars;
-    scores = (double *) calloc((num_vars * 2), sizeof(double));
-    sorted_vars = (VarScore *) calloc(num_vars, sizeof(VarScore));
+    scores = (double *)calloc((num_vars * 2), sizeof(double));
+    sorted_vars = (VarScore *)calloc(num_vars, sizeof(VarScore));
 
     ClauseNode *list = form->clauses;
     while (list != NULL)
@@ -123,6 +135,15 @@ void PreProcessing(Form *form)
         {
             LiteralId lit = clause->literals[i];
             int var_index = abs(lit) - 1;
+
+            if (clause_size == 1)
+            {
+                VariableId var = abs(lit) - 1;
+                insertDecisionLevel(var, (var > 0));
+                setVarState(var, (lit > 0) ? TRUE : FALSE);
+                Decision *d = getLastDecision();
+                d->flipped = true;
+            }
 
             if (lit > 0)
             {
@@ -157,11 +178,11 @@ void PreProcessing(Form *form)
     qsort(sorted_vars, form->numVars, sizeof(VarScore), compareVarScore);
 
     // TWO WATCHED LITERALS
-
+    queue = (LiteralId *)malloc(sizeof(LiteralId) * form->numVars);
     // aloca vetor de clausulas
-    twc = (TwoWatchedClause *) malloc(sizeof(TwoWatchedClause) * form->numClauses);
+    twc = (TwoWatchedClause *)malloc(sizeof(TwoWatchedClause) * form->numClauses);
     ClauseNode *twc_pivot = form->clauses;
-    for (int i=0; i < form->numClauses; i++)
+    for (int i = 0; i < form->numClauses; i++)
     {
         twc[i].c = twc_pivot->clause;
         twc[i].ids[0] = 0;
@@ -171,11 +192,12 @@ void PreProcessing(Form *form)
 
     // aloca vetor de literais
     int numLiterals = form->numVars * 2;
-    twl = (TwoWatchedLiterals **) calloc(numLiterals, sizeof(TwoWatchedLiterals *));
+    twl = (TwoWatchedLiterals **)calloc(numLiterals, sizeof(TwoWatchedLiterals *));
 
     // preenche
-    ClauseNode *head=form->clauses;
-    for (int i=0; i < form->numClauses; i++){
+    ClauseNode *head = form->clauses;
+    for (int i = 0; i < form->numClauses; i++)
+    {
         int w0 = twc[i].ids[0];
         int w1 = twc[i].ids[1];
 
@@ -211,7 +233,6 @@ bool BCP(Form *formula, const Decision decision)
 {
     // Fila para literais false-valued a serem propagados
     int numVars = formula->numVars;
-    LiteralId *queue = (LiteralId*) malloc(sizeof(LiteralId) * numVars);
     int head = 0, tail = 0;
 
     LiteralId falseValuedLiteral = ((decision.value == FALSE) ? (decision.id + 1) : -decision.id - 1);
@@ -235,8 +256,10 @@ bool BCP(Form *formula, const Decision decision)
             int falseIndex = -1;
 
             // Descobre qual dos literais assistidos se tornou falso
-            if (clause->literals[watch0] == lit) falseIndex = watch0;
-            else if (clause->literals[watch1] == lit) falseIndex = watch1;
+            if (clause->literals[watch0] == lit)
+                falseIndex = watch0;
+            else if (clause->literals[watch1] == lit)
+                falseIndex = watch1;
             else
             {
                 node = nextNode;
@@ -254,7 +277,7 @@ bool BCP(Form *formula, const Decision decision)
             }
 
             // Tenta encontrar um novo literal não-FALSE para assistir na cláusula
-            if (find_and_move(twl, tw_clause, falseIndex, pos))
+            if (find_and_swap(twl, tw_clause, falseIndex, pos))
             {
                 node = nextNode;
                 continue;
@@ -266,7 +289,8 @@ bool BCP(Form *formula, const Decision decision)
                 // Implicação: define otherLit para satisfazer a cláusula
                 VariableId var = abs(otherLit) - 1;
                 insertDecisionLevel(var, (otherLit > 0));
-                setVarState(var, (otherLit > 0) ? TRUE : FALSE);
+                Decision *d = getLastDecision();
+                d->flipped = true;
 
                 // Adiciona o literal correspondente false-valued à fila de propagação
                 queue[tail++] = -otherLit;
@@ -275,12 +299,10 @@ bool BCP(Form *formula, const Decision decision)
             }
 
             // Se o outro literal for FALSE, ocorre conflito
-            free(queue);
             return false;
         }
     }
 
-    free(queue);
     return true;
 }
 
