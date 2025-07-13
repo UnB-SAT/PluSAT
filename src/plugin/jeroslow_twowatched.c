@@ -6,9 +6,34 @@
 
 double *scores = NULL;
 
+typedef struct TwoWatchedClause 
+{
+    int ids[2];
+    Clause *c;
+} TwoWatchedClause;
+
+typedef struct TwoWatchedLiterals 
+{
+    TwoWatchedClause *c;
+    struct TwoWatchedLiterals *next;
+} TwoWatchedLiterals;
+
+TwoWatchedLiterals* push(TwoWatchedLiterals *list, TwoWatchedClause *c)
+{
+    TwoWatchedLiterals *new = (TwoWatchedLiterals *) malloc(sizeof(TwoWatchedLiterals));
+    new->c = c;
+    new->next = list;
+    return new;
+}
+
+TwoWatchedLiterals **twl = NULL;
+TwoWatchedClause *twc = NULL;
+
 void PreProcessing(Form *form)
 {
-    scores = (double *)malloc(sizeof(double) * (form->numVars * 2));
+    // JEROSLOW
+
+    scores = (double *) calloc((form->numVars * 2), sizeof(double));
 
     ClauseNode *list = form->clauses;
     while (list != NULL)
@@ -32,6 +57,39 @@ void PreProcessing(Form *form)
             }
         }
         list = list->next;
+    }
+
+    // TWO WATCHED LITERALS
+
+    // aloca vetor de clausulas
+    // TODO: verificar e tratar clausulas unitarias
+    twc = (TwoWatchedClause *) malloc(sizeof(TwoWatchedClause) * form->numClauses);
+    ClauseNode *twc_pivot = form->clauses;
+    for (int i=0; i < form->numClauses; i++)
+    {
+        twc[i].c = twc_pivot->clause;
+        twc[i].ids[0] = 0;
+        twc[i].ids[1] = (twc[i].c->size > 1 ? 1 : 0);
+        twc_pivot = twc_pivot->next;
+    }
+
+    // aloca vetor de literais
+    int numLiterals = form->numVars * 2;
+    twl = (TwoWatchedLiterals **) calloc(numLiterals, sizeof(TwoWatchedLiterals *));
+
+    // aloca listas encadeadas
+    for (int i=0; i < numLiterals; i++)
+    {
+        twl[i] = (TwoWatchedLiterals *) malloc (sizeof(TwoWatchedLiterals));
+    }
+
+    // preenche
+    ClauseNode *pivot, *head=form->clauses;
+    for (int i=0; i < form->numClauses; i++){
+        for (int j=0; j < 2; j++){
+            int pos = getPos(twc[i].c->literals[twc[i].ids[j]]); // pos = getPos(twc[i].c->literals[twc[i].ids[j]]);
+            twl[pos] = push(twl[pos], &twc[i]);
+        }
     }
 }
 
